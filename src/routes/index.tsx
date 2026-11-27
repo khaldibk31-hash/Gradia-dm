@@ -1,6 +1,6 @@
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
-import { CinematicSplash, SplashCanvas } from "@/components/CinematicSplash";
+import { CinematicSplash } from "@/components/CinematicSplash";
 
 const StoreApp = lazy(() => import("@/StoreApp"));
 
@@ -24,11 +24,13 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   return (
-    <ClientOnly fallback={<SplashCanvas animate={false} />}>
+    <>
       <CinematicSplash />
-      <Suspense fallback={<SplashCanvas animate={false} />}>
-        <StoreApp />
-      </Suspense>
-    </ClientOnly>
+      <ClientOnly fallback={<div className="min-h-screen bg-[#FAF8F5]" aria-hidden="true" />}>
+        <Suspense fallback={<div className="min-h-screen bg-[#FAF8F5]" aria-hidden="true" />}>
+          <StoreApp />
+        </Suspense>
+      </ClientOnly>
+    </>
   );
 }

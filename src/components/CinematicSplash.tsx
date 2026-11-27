@@ -5,16 +5,22 @@ const BRAND_CREST_SRC =
 
 interface SplashCanvasProps {
   animate?: boolean;
-  exiting?: boolean;
+  isFadingOut?: boolean;
+  onDismiss?: () => void;
 }
 
-export function SplashCanvas({ animate = true, exiting = false }: SplashCanvasProps) {
+export function SplashCanvas({
+  animate = true,
+  isFadingOut = false,
+  onDismiss,
+}: SplashCanvasProps) {
   return (
     <div
       role="status"
       aria-label="DM GRADUATION — أزياء التخرج الفاخرة"
-      className={`fixed inset-0 z-[9999] flex min-h-screen items-center justify-center overflow-hidden bg-[#FAF8F5] px-6 transition-all duration-500 ease-out ${
-        exiting ? "opacity-0 -translate-y-4 pointer-events-none" : "opacity-100 translate-y-0"
+      onClick={onDismiss}
+      className={`fixed inset-0 z-[9999] flex min-h-screen items-center justify-center overflow-hidden bg-[#FAF8F5] px-6 cursor-pointer transition-opacity duration-500 ${
+        isFadingOut ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
     >
       {/* Panoramic Ambient Glow (Champagne Gold + Royal Burgundy) */}
@@ -98,27 +104,36 @@ export function SplashCanvas({ animate = true, exiting = false }: SplashCanvasPr
 }
 
 export function CinematicSplash() {
-  const [exiting, setExiting] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
+  const [isFadingOut, setIsFadingOut] = useState(false);
 
   useEffect(() => {
-    const exitTimer = window.setTimeout(() => {
-      setExiting(true);
+    const fadeTimer = setTimeout(() => {
+      setIsFadingOut(true);
     }, 2200);
 
-    const unmountTimer = window.setTimeout(() => {
-      setDismissed(true);
-    }, 2750);
+    const unmountTimer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2700);
 
     return () => {
-      window.clearTimeout(exitTimer);
-      window.clearTimeout(unmountTimer);
+      clearTimeout(fadeTimer);
+      clearTimeout(unmountTimer);
     };
   }, []);
 
-  if (dismissed) {
+  if (!showSplash) {
     return null;
   }
 
-  return <SplashCanvas animate exiting={exiting} />;
+  return (
+    <SplashCanvas
+      animate
+      isFadingOut={isFadingOut}
+      onDismiss={() => {
+        setIsFadingOut(true);
+        setShowSplash(false);
+      }}
+    />
+  );
 }
