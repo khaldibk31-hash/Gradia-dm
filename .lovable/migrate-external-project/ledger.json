@@ -1,0 +1,100 @@
+[
+  {
+    "capability": "code",
+    "source": "React 19 / Vite source archive",
+    "outcome": "migrate",
+    "status": "in_progress",
+    "next_action": "Finish storefront and admin upgrades, preserve workflows."
+  },
+  {
+    "capability": "schema",
+    "source": "orders, store_settings, store_data, customer_reviews references; no DDL export",
+    "outcome": "migrate",
+    "status": "pending",
+    "next_action": "Upload exact schema export to reproduce tables, indexes, policies and triggers without guessing."
+  },
+  {
+    "capability": "records",
+    "source": "No CSV or JSON table exports",
+    "outcome": "migrate",
+    "status": "pending",
+    "next_action": "Upload filtered table exports."
+  },
+  {
+    "capability": "auth identities",
+    "source": "Source admin email/password authentication; no user export",
+    "outcome": "migrate",
+    "status": "pending",
+    "next_action": "Upload original user IDs and emails; verify email ownership and new password setup."
+  },
+  {
+    "capability": "authorization",
+    "source": "Source database policies not bundled",
+    "outcome": "migrate",
+    "status": "pending",
+    "next_action": "Upload policies and role mappings; verify private order isolation."
+  },
+  {
+    "capability": "uploaded file bytes",
+    "source": "Bundled images plus existing external storage URLs",
+    "outcome": "preserve",
+    "status": "in_progress",
+    "next_action": "Move bundled assets to CDN; external objects require inventory and bytes verification."
+  },
+  {
+    "capability": "external providers",
+    "source": "Telegram, shipping couriers, WhatsApp and social links",
+    "outcome": "preserve",
+    "status": "pending",
+    "next_action": "Retain source integrations; live Telegram/courier verification awaits secure credentials."
+  },
+  {
+    "capability": "public endpoints",
+    "source": "Client directly invokes data API; no server endpoints found",
+    "outcome": "preserve",
+    "status": "inspected",
+    "next_action": "Review original database triggers and external callers from schema export."
+  },
+  {
+    "capability": "callbacks",
+    "source": "Source auth callback in browser",
+    "outcome": "migrate",
+    "status": "pending",
+    "next_action": "Migrate authentication callback after identity export."
+  },
+  {
+    "capability": "webhooks",
+    "source": "None in archive; database-trigger integrations unknown",
+    "outcome": "preserve",
+    "status": "pending",
+    "next_action": "Confirm original triggers and webhook definitions from schema export."
+  },
+  {
+    "capability": "schedules",
+    "source": "None in archive; backend definitions unknown",
+    "outcome": "preserve",
+    "status": "pending",
+    "next_action": "Inspect schedule export before cutover."
+  },
+  {
+    "capability": "secrets",
+    "source": "Telegram and courier credentials entered in source admin settings",
+    "outcome": "preserve",
+    "status": "pending",
+    "next_action": "Move credentials server-side; never import token fields into public settings."
+  },
+  {
+    "capability": "cutover",
+    "source": "Source remains live; new preview is unpublished",
+    "outcome": "pending",
+    "status": "pending",
+    "next_action": "Do not cut over until exact schema, records, identities and integrations verified."
+  },
+  {
+    "capability": "verification",
+    "source": "Storefront, color previews, CCP and 58 wilayas",
+    "outcome": "verify",
+    "status": "in_progress",
+    "next_action": "Test mobile/desktop browse and cart; authenticated orders and provider paths remain pending."
+  }
+]

@@ -1,0 +1,591 @@
+const WHATSAPP_NUMBER = "213673423172";
+function normalizeWhatsAppInput(raw) {
+  if (typeof raw !== "string") return "";
+  let digits = raw.replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("00")) {
+    digits = digits.slice(2);
+  }
+  if (/^0[567]\d*$/.test(digits) || /^0(?!0)\d+$/.test(digits)) {
+    digits = `213${digits.slice(1)}`;
+  } else if (/^[567]\d{8}$/.test(digits)) {
+    digits = `213${digits}`;
+  }
+  return digits;
+}
+function formatWhatsAppNumber(raw) {
+  const normalized = normalizeWhatsAppInput(raw);
+  return normalized || WHATSAPP_NUMBER;
+}
+function sanitizeSocialUrl(raw) {
+  if (typeof raw !== "string") return "";
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  const lower = trimmed.toLowerCase();
+  if (lower.startsWith("javascript:") || lower.startsWith("data:") || lower.startsWith("vbscript:")) {
+    return "";
+  }
+  const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed.replace(/^\/+/, "")}`;
+  try {
+    const parsed = new URL(withScheme);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return "";
+    }
+    return parsed.toString();
+  } catch {
+    return "";
+  }
+}
+const BRAND_LOGO_PATH = "/assets/aistudio/Messenger_creation_1E2398F0-575A-4054-A762-C6E5FA028C9C_533e43e0.jpeg";
+const HERO_IMAGE_PATH = "/src/assets/images/hero_graduation_atelier_1794839417274.jpg";
+const HERO_BANNER_IMAGE_PATH = "/src/assets/images/hero_modest_graduation_celebration_1795535481621.jpg";
+const HERO_BLACK_GOLD_IMAGE_PATH = "/src/assets/images/hero_luxury_black_gold_graduation_1795452074554.jpg";
+const SHAWL_MISS_IMAGE_PATH = "/src/assets/images/stole_miss_ivory_1795608463033.jpg";
+const SHAWL_REGULAR_IMAGE_PATH = "/src/assets/images/stole_regular_ivory_1795608463680.jpg";
+const SHAWL_BACK_IMAGE_PATH = "/src/assets/images/stole_back_ivory_1795608465248.jpg";
+const SHAWL_AMERICAN_IMAGE_PATH = "/src/assets/images/stole_american_ivory_1795608465114.jpg";
+const SHAWL_IMAGE_PATH = SHAWL_MISS_IMAGE_PATH;
+const ROBE_IMAGE_PATH = "/src/assets/images/product_graduation_robe_1794839418964.jpg";
+const CAP_IMAGE_PATH = "/src/assets/images/product_graduation_cap_1794839419964.jpg";
+const BOUQUET_IMAGE_PATH = "/src/assets/images/product_graduation_bouquet_1794839419713.jpg";
+const DEFAULT_PAUSE_MESSAGE = "\u0646\u0639\u062A\u0630\u0631 \u0645\u0646\u0643\u0645\u060C \u062A\u0645 \u0625\u064A\u0642\u0627\u0641 \u0627\u0633\u062A\u0642\u0628\u0627\u0644 \u0627\u0644\u0637\u0644\u0628\u064A\u0627\u062A \u0645\u0624\u0642\u062A\u0627\u064B \u0646\u0638\u0631\u0627\u064B \u0644\u0636\u063A\u0637 \u0627\u0644\u0637\u0644\u0628\u0627\u062A \u0627\u0644\u0643\u0628\u064A\u0631. \u0633\u0646\u0639\u0648\u062F \u0644\u0627\u0633\u062A\u0642\u0628\u0627\u0644 \u0637\u0644\u0628\u0627\u062A\u0643\u0645 \u0642\u0631\u064A\u0628\u0627\u064B!";
+const DEFAULT_CATEGORY_PAUSE_BADGE = "\u064A\u062A\u0648\u0641\u0631 \u0642\u0631\u064A\u0628\u0627\u064B";
+const DEFAULT_PAYMENT_INFO = "\u064A\u0645\u0643\u0646\u0643 \u062A\u062D\u0648\u064A\u0644 \u0627\u0644\u0639\u0631\u0628\u0648\u0646 (50%) \u0639\u0628\u0631 \u062D\u0633\u0627\u0628 CCP (\u0628\u0631\u064A\u062F \u0627\u0644\u062C\u0632\u0627\u0626\u0631) \u0648\u0625\u0631\u0641\u0627\u0642 \u0635\u0648\u0631\u0629 \u0627\u0644\u0648\u0635\u0644 \u0647\u0646\u0627 \u0644\u062A\u0633\u0631\u064A\u0639 \u062A\u0623\u0643\u064A\u062F \u0627\u0644\u0637\u0644\u0628\u060C \u0623\u0648 \u062A\u0623\u0643\u064A\u062F \u0627\u0644\u0637\u0644\u0628 \u0623\u0648\u0644\u0627\u064B \u0648\u0627\u0633\u062A\u0644\u0627\u0645 \u062A\u0641\u0627\u0635\u064A\u0644 \u0627\u0644\u062D\u0633\u0627\u0628 \u0639\u0628\u0631 \u0648\u0627\u062A\u0633\u0627\u0628.";
+const DEFAULT_SEASON_BANNER_TEXT = "\u{1F393} \u0645\u0648\u0633\u0645 \u0627\u0644\u062A\u062E\u0631\u062C 2026: \u0627\u062D\u062C\u0632 \u0648\u0634\u0627\u062D\u0643 \u0648\u0631\u0648\u0628\u0643 \u0645\u0628\u0643\u0631\u0627\u064B \u0644\u0636\u0645\u0627\u0646 \u0627\u0644\u062A\u0633\u0644\u064A\u0645 \u0642\u0628\u0644 \u062D\u0641\u0644 \u062A\u062E\u0631\u062C\u0643!";
+const CATEGORY_LABELS = {
+  all: "\u062C\u0645\u064A\u0639 \u0627\u0644\u0642\u0637\u0639",
+  shawl: "\u0627\u0644\u0648\u0634\u0627\u062D \u0648\u0627\u0644\u0642\u0628\u0639\u0629",
+  robe: "\u0627\u0644\u0631\u0648\u0628 \u0627\u0644\u0623\u0643\u0627\u062F\u064A\u0645\u064A",
+  cap: "\u0627\u0644\u0642\u0628\u0639\u0629 \u0627\u0644\u0645\u0646\u0641\u0631\u062F\u0629",
+  accessories: "\u0627\u0644\u0648\u0631\u062F \u0648\u0627\u0644\u0625\u0643\u0633\u0633\u0648\u0627\u0631\u0627\u062A"
+};
+const CATEGORY_BRANCHES = {
+  shawl: ["\u0627\u0644\u0643\u0644", "\u0634\u0627\u0644 \u0645\u064A\u0633", "\u0634\u0627\u0644 \u0639\u0627\u062F\u064A", "\u0634\u0627\u0644 \u0628\u0627\u0644\u0638\u0647\u0631", "\u0627\u0644\u0634\u0627\u0644 \u0627\u0644\u0627\u0645\u0631\u064A\u0643\u064A", "\u0645\u0648\u062F\u064A\u0644 \u062E\u0627\u0635"],
+  robe: ["\u0627\u0644\u0643\u0644", "\u0631\u0648\u0628 \u0639\u0627\u062F\u064A", "\u0631\u0648\u0628 \u062E\u0644\u064A\u062C\u064A"],
+  cap: ["\u0627\u0644\u0643\u0644", "Forme V", "\u0643\u0644\u0627\u0633\u064A\u0643\u064A"],
+  accessories: ["\u0627\u0644\u0643\u0644", "\u0648\u0631\u062F"]
+};
+const ROYAL_FIVE_STOLE_COLORS = [
+  { name: "\u0623\u0633\u0648\u062F \u0645\u0644\u0643\u064A", hex: "#141414", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A" },
+  { name: "\u0639\u0646\u0627\u0628\u064A \u0645\u0644\u0643\u064A", hex: "#5E1734", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A" },
+  { name: "\u0643\u062D\u0644\u064A \u062F\u0627\u0643\u0646", hex: "#132238", extraPrice: 0, defaultThreadHex: "#f5f2eb", defaultThreadName: "\u0623\u0628\u064A\u0636 \u0644\u0624\u0644\u0624\u064A" },
+  { name: "\u0623\u062E\u0636\u0631 \u0632\u0645\u0631\u062F\u064A", hex: "#0F3D2E", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A" },
+  { name: "\u0631\u0645\u0627\u062F\u064A \u0641\u062D\u0645\u064A", hex: "#3A3D40", extraPrice: 0, defaultThreadHex: "#e5e0d8", defaultThreadName: "\u0641\u0636\u064A" }
+];
+const STOLE_COLORS = [
+  { name: "\u0623\u0633\u0648\u062F \u0645\u0644\u0643\u064A", hex: "#141212", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A" },
+  { name: "\u0628\u0648\u0631\u063A\u0646\u062F\u064A", hex: "#6c1e34", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A" },
+  { name: "\u0643\u062D\u0644\u064A \u062F\u0627\u0643\u0646", hex: "#172b59", extraPrice: 0, defaultThreadHex: "#f5f2eb", defaultThreadName: "\u0623\u0628\u064A\u0636 \u0644\u0624\u0644\u0624\u064A" },
+  { name: "\u0623\u062E\u0636\u0631 \u0645\u0644\u0643\u064A", hex: "#0b4432", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A" },
+  { name: "\u0631\u0645\u0627\u062F\u064A \u0641\u062D\u0645\u064A", hex: "#373534", extraPrice: 0, defaultThreadHex: "#e5e0d8", defaultThreadName: "\u0641\u0636\u064A" },
+  { name: "\u0623\u0628\u064A\u0636 \u0639\u0627\u062C\u064A", hex: "#EDE6D8", extraPrice: 0, defaultThreadHex: "#762b43", defaultThreadName: "\u0628\u0648\u0631\u063A\u0646\u062F\u064A" }
+];
+const THREAD_COLORS = [
+  { name: "\u0630\u0647\u0628\u064A \u0645\u0644\u0643\u064A", hex: "#d4af37", extraPrice: 0 },
+  { name: "\u0641\u0636\u064A \u0644\u0624\u0644\u0624\u064A", hex: "#e2e8f0", extraPrice: 0 },
+  { name: "\u0623\u0628\u064A\u0636 \u0646\u0627\u0635\u0639", hex: "#ffffff", extraPrice: 0 },
+  { name: "\u0628\u0648\u0631\u063A\u0646\u062F\u064A", hex: "#762b43", extraPrice: 0 },
+  { name: "\u0623\u0633\u0648\u062F \u0641\u062D\u0645\u064A", hex: "#181514", extraPrice: 0 }
+];
+const CAP_SWATCHES = [
+  { name: "\u0623\u0633\u0648\u062F \u0645\u0644\u0643\u064A", hex: "#141212", extraPrice: 0 },
+  { name: "\u0628\u0648\u0631\u063A\u0646\u062F\u064A", hex: "#762b43", extraPrice: 0 },
+  { name: "\u0623\u062D\u0645\u0631 \u064A\u0627\u0642\u0648\u062A\u064A", hex: "#991b1b", extraPrice: 0 },
+  { name: "\u0643\u062D\u0644\u064A \u062F\u0627\u0643\u0646", hex: "#1e3a8a", extraPrice: 0 },
+  { name: "\u0623\u0632\u0631\u0642 \u0645\u0644\u0643\u064A", hex: "#162B5B", extraPrice: 0 },
+  { name: "\u0623\u0632\u0631\u0642 \u0633\u0645\u0627\u0648\u064A", hex: "#38bdf8", extraPrice: 0 },
+  { name: "\u0623\u062E\u0636\u0631 \u0645\u0644\u0643\u064A", hex: "#064e3b", extraPrice: 0 },
+  { name: "\u0623\u062E\u0636\u0631 \u0632\u0645\u0631\u062F\u064A", hex: "#10b981", extraPrice: 0 },
+  { name: "\u0623\u0628\u064A\u0636 \u0639\u0627\u062C\u064A", hex: "#EDE6D8", extraPrice: 0 },
+  { name: "\u0628\u064A\u062C \u0643\u0631\u064A\u0645\u064A", hex: "#e7d8c9", extraPrice: 0 },
+  { name: "\u0630\u0647\u0628\u064A \u0645\u0644\u0643\u064A", hex: "#c89b3c", extraPrice: 0 },
+  { name: "\u0631\u0645\u0627\u062F\u064A \u0641\u0636\u064A", hex: "#9ca3af", extraPrice: 0 },
+  { name: "\u0648\u0631\u062F\u064A \u0646\u0627\u0639\u0645", hex: "#f472b6", extraPrice: 0 },
+  { name: "\u0641\u0648\u0634\u064A\u0627", hex: "#be185d", extraPrice: 0 },
+  { name: "\u0628\u0646\u0641\u0633\u062C\u064A \u0645\u0644\u0643\u064A", hex: "#581c87", extraPrice: 0 },
+  { name: "\u0628\u0646\u064A \u0634\u0648\u0643\u0648\u0644\u0627\u062A\u0629", hex: "#451a03", extraPrice: 0 }
+];
+const DEFAULT_STOLE_GOWN_COLORS = [
+  ...STOLE_COLORS,
+  ...CAP_SWATCHES.filter(
+    (c) => !STOLE_COLORS.some((s) => s.name === c.name)
+  ).map((c) => ({
+    ...c,
+    defaultThreadHex: "#d4af37",
+    defaultThreadName: "\u0630\u0647\u0628\u064A \u0645\u0644\u0643\u064A"
+  }))
+];
+const DEFAULT_STOLE_COLORS = DEFAULT_STOLE_GOWN_COLORS;
+const DEFAULT_GOWN_COLORS = DEFAULT_STOLE_GOWN_COLORS;
+const DEFAULT_TESTIMONIALS = [];
+const DEFAULT_SHOWCASE_BADGE = "\u0623\u0639\u0645\u0627\u0644 \u062D\u0642\u064A\u0642\u064A\u0629 \u0645\u0646 \u0648\u0631\u0634\u062A\u0646\u0627 \xB7 \u062A\u0637\u0631\u064A\u0632 \u0648\u062A\u0641\u0635\u064A\u0644 \u064A\u062F\u0648\u064A";
+const DEFAULT_SHOWCASE_TITLE = "\u0645\u0646 \u0625\u0628\u062F\u0627\u0639\u0627\u062A\u0646\u0627 \u0627\u0644\u0633\u0627\u0628\u0642\u0629";
+const DEFAULT_SHOWCASE_SUBTITLE = "\u0644\u0642\u0637\u0627\u062A \u062D\u0642\u064A\u0642\u064A\u0629 \u0644\u0634\u0627\u0644\u0627\u062A \u0645\u0637\u0631\u0632\u0629 \u0628\u062E\u0637 \u0627\u0644\u062B\u0644\u062B \u0648\u0623\u0637\u0642\u0645 \u062A\u062E\u0631\u062C \u0641\u0627\u062E\u0631\u0629 \u0646\u064F\u0641\u0651\u0630\u062A \u062E\u0635\u064A\u0635\u0627\u064B \u0644\u062E\u0631\u064A\u062C\u064A \u0627\u0644\u062C\u0627\u0645\u0639\u0627\u062A \u0627\u0644\u062C\u0632\u0627\u0626\u0631\u064A\u0629.";
+const DEFAULT_PROMO_SETTINGS = {
+  promoCodeInputEnabled: false,
+  storewideDiscountPercent: 0,
+  promoCodes: [
+    {
+      id: "promo-grad10",
+      code: "GRAD10",
+      type: "percent",
+      value: 10,
+      active: false,
+      label: "\u062A\u062E\u0641\u064A\u0636 \u0627\u0644\u062A\u062E\u0631\u062C 10%"
+    },
+    {
+      id: "promo-grad20",
+      code: "GRAD20",
+      type: "percent",
+      value: 20,
+      active: false,
+      label: "\u062A\u062E\u0641\u064A\u0636 \u0627\u0644\u062A\u062E\u0631\u062C 20%"
+    }
+  ]
+};
+const DEFAULT_SHOWCASE_PHOTOS = [
+  {
+    id: "showcase-1",
+    imageUrl: SHAWL_IMAGE_PATH,
+    caption: "\u0634\u0627\u0644 \u0645\u064A\u0633 \u0628\u062A\u0637\u0631\u064A\u0632 \u062E\u0637 \u0627\u0644\u062B\u0644\u062B \u0627\u0644\u0630\u0647\u0628\u064A",
+    wilaya: "\u0627\u0644\u062C\u0632\u0627\u0626\u0631 \u0627\u0644\u0639\u0627\u0635\u0645\u0629 \xB7 \u062C\u0627\u0645\u0639\u0629 \u0647\u0648\u0627\u0631\u064A \u0628\u0648\u0645\u062F\u064A\u0646",
+    tag: "\u0634\u0627\u0644\u0627\u062A \u0645\u0637\u0631\u0632\u0629"
+  },
+  {
+    id: "showcase-2",
+    imageUrl: HERO_BLACK_GOLD_IMAGE_PATH,
+    caption: "\u0637\u0642\u0645 \u062A\u062E\u0631\u062C \u0645\u0644\u0643\u064A \u0623\u0633\u0648\u062F \u0648\u0630\u0647\u0628\u064A \u0645\u062E\u0635\u0635 \u0628\u0627\u0644\u0627\u0633\u0645",
+    wilaya: "\u0648\u0647\u0631\u0627\u0646 \xB7 \u062C\u0627\u0645\u0639\u0629 \u0623\u062D\u0645\u062F \u0628\u0646 \u0628\u0644\u0629",
+    tag: "\u0637\u0642\u0645 \u0643\u0627\u0645\u0644"
+  },
+  {
+    id: "showcase-3",
+    imageUrl: HERO_IMAGE_PATH,
+    caption: "\u062A\u0641\u0635\u064A\u0644 \u0648\u062A\u0637\u0631\u064A\u0632 \u0645\u0646 \u0648\u0631\u0634\u0629 DG by Douaa",
+    wilaya: "\u0642\u0633\u0646\u0637\u064A\u0646\u0629 \xB7 \u062F\u0641\u0639\u0629 2026",
+    tag: "\u0634\u0627\u0644 \u0628\u0627\u0644\u0638\u0647\u0631"
+  },
+  {
+    id: "showcase-4",
+    imageUrl: ROBE_IMAGE_PATH,
+    caption: "\u0631\u0648\u0628 \u0627\u0644\u062A\u062E\u0631\u062C \u0627\u0644\u0641\u0627\u062E\u0631 \u0628\u062E\u064A\u0627\u0637\u0629 \u062F\u0642\u064A\u0642\u0629 \u0648\u0645\u0642\u0627\u0633 \u0645\u0636\u0628\u0648\u0637",
+    wilaya: "\u062A\u064A\u0627\u0631\u062A \xB7 \u062C\u0627\u0645\u0639\u0629 \u0627\u0628\u0646 \u062E\u0644\u062F\u0648\u0646",
+    tag: "\u0623\u0631\u0648\u0627\u0628 \u0627\u0644\u062A\u062E\u0631\u062C"
+  },
+  {
+    id: "showcase-5",
+    imageUrl: CAP_IMAGE_PATH,
+    caption: "\u0642\u0628\u0639\u0629 \u062A\u062E\u0631\u062C \u0645\u062E\u0635\u0635\u0629 \u0628\u062A\u0637\u0631\u064A\u0632 \u0627\u0644\u0627\u0633\u0645 \u0648\u0627\u0644\u0634\u0631\u0627\u0628\u0629 \u0627\u0644\u062D\u0631\u064A\u0631\u064A\u0629",
+    wilaya: "\u0633\u0637\u064A\u0641 \xB7 \u062C\u0627\u0645\u0639\u0629 \u0641\u0631\u062D\u0627\u062A \u0639\u0628\u0627\u0633",
+    tag: "\u0642\u0628\u0639\u0627\u062A \u0645\u062E\u0635\u0635\u0629"
+  },
+  {
+    id: "showcase-6",
+    imageUrl: BOUQUET_IMAGE_PATH,
+    caption: "\u062A\u0646\u0633\u064A\u0642 \u0628\u0627\u0642\u0629 \u0648\u0631\u062F \u0627\u0644\u062A\u062E\u0631\u062C \u0645\u0639 \u0628\u0637\u0627\u0642\u0629 \u062A\u0647\u0646\u0626\u0629 \u0641\u0627\u062E\u0631\u0629",
+    wilaya: "\u062A\u0644\u0645\u0633\u0627\u0646 \xB7 \u062C\u0627\u0645\u0639\u0629 \u0623\u0628\u0648 \u0628\u0643\u0631 \u0628\u0644\u0642\u0627\u064A\u062F",
+    tag: "\u0628\u0627\u0642\u0627\u062A \u0627\u0644\u062A\u062E\u0631\u062C"
+  }
+];
+const CATEGORY_IMAGE_BG_PRESETS = [
+  { name: "\u0639\u0627\u062C\u064A \u062F\u0627\u0641\u0626", hex: "#F7F4EF" },
+  { name: "\u0623\u0628\u064A\u0636 \u0646\u0627\u0635\u0639", hex: "#FFFFFF" },
+  { name: "\u0643\u0631\u064A\u0645\u064A \u0646\u0627\u0639\u0645", hex: "#EFEAE2" },
+  { name: "\u0648\u0631\u062F\u064A \u0646\u0627\u0639\u0645", hex: "#FDF2F5" },
+  { name: "\u0644\u0624\u0644\u0624\u064A \u0641\u0627\u062A\u062D", hex: "#F3F4F6" }
+];
+const DEFAULT_CAP_OPTION_PRICES = {
+  round: 0,
+  triangle: 0,
+  tuxedo: 100,
+  none: -500
+};
+const DEFAULT_DYNAMIC_SETTINGS = {
+  stoleColors: DEFAULT_STOLE_COLORS,
+  gownColors: DEFAULT_GOWN_COLORS,
+  threadColors: THREAD_COLORS,
+  capColors: CAP_SWATCHES,
+  ordersPaused: false,
+  pauseMessage: DEFAULT_PAUSE_MESSAGE,
+  pausedCategories: {},
+  categoryPauseBadge: DEFAULT_CATEGORY_PAUSE_BADGE,
+  telegramEnabled: false,
+  telegramBotToken: "",
+  telegramChatId: "",
+  paymentInfo: DEFAULT_PAYMENT_INFO,
+  customDeliveryOffices: [],
+  testimonials: DEFAULT_TESTIMONIALS,
+  showcasePhotos: DEFAULT_SHOWCASE_PHOTOS,
+  promoSettings: DEFAULT_PROMO_SETTINGS,
+  customTexts: {},
+  hiddenSections: {},
+  categoryBranches: {},
+  seasonBannerEnabled: true,
+  seasonBannerText: DEFAULT_SEASON_BANNER_TEXT,
+  whatsappNumber: WHATSAPP_NUMBER,
+  instagramUrl: "",
+  facebookUrl: "",
+  tiktokUrl: "",
+  categoryImageBgColors: {},
+  categoryCoverImages: {},
+  capOptionPrices: DEFAULT_CAP_OPTION_PRICES,
+  deliveryPricing: {
+    freeDelivery: false,
+    deliveryLocked: false,
+    defaultHomePrice: 0,
+    defaultOfficePrice: 0,
+    wilayas: {}
+  },
+  shippingCompanies: []
+};
+const STOLE_STUDIO_MODELS = [
+  { id: "miss-crepe", label: "\u0634\u0627\u0644 \u0645\u064A\u0633 \xB7 \u0642\u0645\u0627\u0634 \u0643\u0631\u064A\u0628", price: 3800 },
+  { id: "miss-dan", label: "\u0634\u0627\u0644 \u0645\u064A\u0633 \xB7 \u0642\u0645\u0627\u0634 \u062F\u0627\u0646", price: 4300 },
+  { id: "plain-crepe", label: "\u0634\u0627\u0644 \u0639\u0627\u062F\u064A \u0628\u062F\u0648\u0646 \u0638\u0647\u0631 \xB7 \u0643\u0631\u064A\u0628", price: 3900 },
+  { id: "plain-dan", label: "\u0634\u0627\u0644 \u0639\u0627\u062F\u064A \u0628\u062F\u0648\u0646 \u0638\u0647\u0631 \xB7 \u062F\u0627\u0646", price: 4400 },
+  { id: "back-crepe", label: "\u0634\u0627\u0644 \u0628\u0627\u0644\u0638\u0647\u0631 \xB7 \u0642\u0645\u0627\u0634 \u0643\u0631\u064A\u0628", price: 4500 },
+  { id: "back-dan", label: "\u0634\u0627\u0644 \u0628\u0627\u0644\u0638\u0647\u0631 \xB7 \u0642\u0645\u0627\u0634 \u062F\u0627\u0646", price: 4900 }
+];
+const DEFAULT_COPY = {
+  brandName: "DG by Douaa",
+  heroEyebrow: "\u0645\u0648\u0633\u0645 \u0627\u0644\u062A\u062E\u0631\u062C 2026",
+  heroTitle: "\u062A\u062E\u0631\u0651\u062C \u0628\u0623\u0646\u0627\u0642\u0629 \u062A\u0644\u064A\u0642 \u0628\u0625\u0646\u062C\u0627\u0632\u0643",
+  heroSubtitle: "\u0623\u0631\u0648\u0627\u0628\u060C \u0642\u0628\u0639\u0627\u062A \u0648\u0648\u0634\u0627\u062D\u0627\u062A \u062A\u062E\u0631\u062C \u0641\u0627\u062E\u0631\u0629 \u0645\u0639 \u0625\u0645\u0643\u0627\u0646\u064A\u0629 \u0627\u0644\u062A\u062E\u0635\u064A\u0635 \u0628\u0627\u0644\u0627\u0633\u0645 \u0648\u0634\u0639\u0627\u0631 \u0627\u0644\u062C\u0627\u0645\u0639\u0629. \u062A\u0648\u0635\u064A\u0644 \u0625\u0644\u0649 58 \u0648\u0644\u0627\u064A\u0629.",
+  studioTitle: "\u0627\u0633\u062A\u0648\u062F\u064A\u0648 \u062A\u0635\u0645\u064A\u0645 \u0627\u0644\u0648\u0634\u0627\u062D",
+  studioSubtitle: "\u0627\u0643\u062A\u0628 \u0627\u0633\u0645\u0643 \u0623\u0648 \u062F\u0641\u0639\u062A\u0643 \u0628\u062E\u0637 \u0627\u0644\u062B\u0644\u062B\u060C \u0648\u0627\u062E\u062A\u0631 \u0644\u0648\u0646 \u0627\u0644\u0642\u0645\u0627\u0634 \u0648\u0627\u0644\u062A\u0637\u0631\u064A\u0632 \u0644\u062A\u0634\u0627\u0647\u062F \u0627\u0644\u0646\u062A\u064A\u062C\u0629 \u0642\u0628\u0644 \u062A\u0623\u0643\u064A\u062F \u0627\u0644\u0637\u0644\u0628.",
+  pricesTitle: "\u062C\u062F\u0648\u0644 \u0627\u0644\u0623\u0633\u0639\u0627\u0631 \u0627\u0644\u0631\u0633\u0645\u064A\u0629",
+  pricesSubtitle: "\u062A\u062A\u0648\u0641\u0631 \u062C\u0645\u064A\u0639 \u0627\u0644\u0634\u0627\u0644\u0627\u062A \u0628\u0642\u0645\u0627\u0634 \u0627\u0644\u0643\u0631\u064A\u0628 \u0627\u0644\u0641\u0627\u062E\u0631 \u0623\u0648 \u0627\u0644\u062F\u0627\u0646 \u0627\u0644\u0645\u062E\u0645\u0644\u064A\u060C \u0648\u064A\u0634\u0645\u0644 \u0627\u0644\u0633\u0639\u0631 \u0627\u0644\u0642\u0628\u0639\u0629 \u0627\u0644\u0623\u0633\u0627\u0633\u064A\u0629 \u0648\u0627\u0644\u062A\u0637\u0631\u064A\u0632."
+};
+const DEFAULT_PRODUCTS = [
+  {
+    id: "shawl-miss-1",
+    category: "shawl",
+    branch: "\u0634\u0627\u0644 \u0645\u064A\u0633",
+    name: "\u0634\u0627\u0644 \u0645\u064A\u0633 \u0645\u0639 \u0642\u0628\u0639\u0629 \u0648\u062A\u0637\u0631\u064A\u0632 \u0645\u062C\u0627\u0646\u064A",
+    description: "\u062A\u0635\u0645\u064A\u0645 \u0627\u0646\u0633\u064A\u0627\u0628\u064A \u0645\u062A\u0648\u0641\u0631 \u0628\u0642\u0645\u0627\u0634 \u0627\u0644\u0643\u0631\u064A\u0628 \u0623\u0648 \u0627\u0644\u062F\u0627\u0646 \u0645\u0639 \u0642\u0628\u0639\u0629 \u062F\u0627\u0626\u0631\u064A\u0629 \u0623\u0648 \u0645\u062B\u0644\u062B\u0629 \u0648\u062A\u0637\u0631\u064A\u0632 \u0627\u0644\u0627\u0633\u0645 \u0648\u0627\u0644\u0634\u0639\u0627\u0631.",
+    basePrice: 3800,
+    imageUrl: SHAWL_MISS_IMAGE_PATH,
+    options: [
+      { label: "\u0643\u0631\u064A\u0628", price: 3800 },
+      { label: "\u062F\u0627\u0646", price: 4300 }
+    ],
+    noCapDeduction: 500
+  },
+  {
+    id: "shawl-regular-1",
+    category: "shawl",
+    branch: "\u0634\u0627\u0644 \u0639\u0627\u062F\u064A",
+    name: "\u0634\u0627\u0644 \u0639\u0627\u062F\u064A \u0628\u062F\u0648\u0646 \u0638\u0647\u0631 \u0645\u0639 \u0627\u0644\u0642\u0628\u0639\u0629",
+    description: "\u0642\u0635\u0629 \u0643\u0644\u0627\u0633\u064A\u0643\u064A\u0629 \u0645\u062A\u0648\u0627\u0632\u0646\u0629 \u0639\u0644\u0649 \u0627\u0644\u0643\u062A\u0641\u064A\u0646 \u0645\u0639 \u0645\u0633\u0627\u062D\u0629 \u0648\u0627\u0633\u0639\u0629 \u0644\u0644\u062A\u0637\u0631\u064A\u0632 \u0628\u0627\u0644\u0644\u063A\u0629 \u0627\u0644\u0639\u0631\u0628\u064A\u0629 \u0623\u0648 \u0627\u0644\u0623\u062C\u0646\u0628\u064A\u0629.",
+    basePrice: 3900,
+    imageUrl: SHAWL_REGULAR_IMAGE_PATH,
+    options: [
+      { label: "\u0643\u0631\u064A\u0628", price: 3900 },
+      { label: "\u062F\u0627\u0646", price: 4400 }
+    ],
+    noCapDeduction: 500
+  },
+  {
+    id: "shawl-back-1",
+    category: "shawl",
+    branch: "\u0634\u0627\u0644 \u0628\u0627\u0644\u0638\u0647\u0631",
+    name: "\u0634\u0627\u0644 \u0628\u0627\u0644\u0638\u0647\u0631 \u0627\u0644\u0641\u0627\u062E\u0631 \u0645\u0639 \u0627\u0644\u0642\u0628\u0639\u0629",
+    description: "\u064A\u0627\u0642\u0629 \u062E\u0644\u0641\u064A\u0629 \u0645\u062A\u0635\u0644\u0629 \u062A\u0645\u0646\u062D \u062B\u0628\u0627\u062A\u0627\u064B \u0645\u062B\u0627\u0644\u064A\u0627\u064B \u0637\u0648\u0627\u0644 \u062D\u0641\u0644 \u0627\u0644\u062A\u062E\u0631\u062C \u0645\u0639 \u062A\u0637\u0631\u064A\u0632 \u0645\u0632\u062F\u0648\u062C \u0627\u0644\u0623\u0637\u0631\u0627\u0641.",
+    basePrice: 4500,
+    imageUrl: SHAWL_BACK_IMAGE_PATH,
+    options: [
+      { label: "\u0643\u0631\u064A\u0628", price: 4500 },
+      { label: "\u062F\u0627\u0646", price: 4900 }
+    ],
+    noCapDeduction: 500
+  },
+  {
+    id: "shawl-american-1",
+    category: "shawl",
+    branch: "\u0627\u0644\u0634\u0627\u0644 \u0627\u0644\u0627\u0645\u0631\u064A\u0643\u064A",
+    name: "\u0627\u0644\u0634\u0627\u0644 \u0627\u0644\u0627\u0645\u0631\u064A\u0643\u064A",
+    description: "\u062A\u0635\u0645\u064A\u0645 \u0623\u0645\u0631\u064A\u0643\u064A \u0641\u0627\u062E\u0631 \u0628\u064A\u0627\u0642\u0629 \u0645\u062B\u0644\u062B\u0629 \u0645\u062A\u062F\u0631\u062C\u0629 \u0627\u0644\u0623\u0644\u0648\u0627\u0646 \u0645\u0639 \u062A\u0641\u0635\u064A\u0644 \u0648\u062A\u0637\u0631\u064A\u0632 \u0645\u062A\u0642\u0646 \u062D\u0633\u0628 \u0627\u0644\u0637\u0644\u0628.",
+    basePrice: 3800,
+    imageUrl: SHAWL_AMERICAN_IMAGE_PATH,
+    options: [],
+    hideCapDetails: true,
+    hideSizing: true
+  },
+  {
+    id: "robe-classic-1",
+    category: "robe",
+    branch: "\u0631\u0648\u0628 \u0639\u0627\u062F\u064A",
+    name: "\u0631\u0648\u0628 \u0627\u0644\u062A\u062E\u0631\u062C \u0627\u0644\u0643\u0644\u0627\u0633\u064A\u0643\u064A",
+    description: "\u062A\u0641\u0635\u064A\u0644 \u0645\u0631\u064A\u062D \u0628\u0643\u0633\u0631\u0627\u062A \u0643\u062A\u0641 \u0645\u062A\u0642\u0646\u0629\u060C \u0645\u062A\u0648\u0641\u0631 \u0628\u0633\u062A\u0629 \u0623\u0644\u0648\u0627\u0646 \u0648\u0645\u0642\u0627\u0633\u0627\u062A \u0645\u0646 XS \u0625\u0644\u0649 XXL \u0623\u0648 \u062D\u0633\u0628 \u0627\u0644\u0642\u064A\u0627\u0633 \u0627\u0644\u062E\u0627\u0635.",
+    basePrice: 2500,
+    imageUrl: ROBE_IMAGE_PATH,
+    options: [
+      { label: "\u0631\u0648\u0628 \u0639\u0627\u062F\u064A", price: 2500 },
+      { label: "\u0631\u0648\u0628 \u062E\u0644\u064A\u062C\u064A", price: 3200 }
+    ],
+    secondaryLabel: "\u0627\u0644\u0641\u0626\u0629 \u0648\u0627\u0644\u0645\u0642\u0627\u0633",
+    secondaryOptions: [
+      "\u0646\u0633\u0627\u0626\u064A \xB7 S",
+      "\u0646\u0633\u0627\u0626\u064A \xB7 M",
+      "\u0646\u0633\u0627\u0626\u064A \xB7 L",
+      "\u0646\u0633\u0627\u0626\u064A \xB7 XL",
+      "\u0631\u062C\u0627\u0644\u064A \xB7 M",
+      "\u0631\u062C\u0627\u0644\u064A \xB7 L",
+      "\u0631\u062C\u0627\u0644\u064A \xB7 XL",
+      "\u0631\u062C\u0627\u0644\u064A \xB7 XXL",
+      "\u0645\u0642\u0627\u0633 \u062E\u0627\u0635"
+    ]
+  },
+  {
+    id: "robe-gulf-1",
+    category: "robe",
+    branch: "\u0631\u0648\u0628 \u062E\u0644\u064A\u062C\u064A",
+    name: "\u0631\u0648\u0628 \u0627\u0644\u062A\u062E\u0631\u062C \u0627\u0644\u062E\u0644\u064A\u062C\u064A \u0627\u0644\u0648\u0627\u0633\u0639",
+    description: "\u0623\u0643\u0645\u0627\u0645 \u0648\u0627\u0633\u0639\u0629 \u0648\u0642\u0635\u0629 \u0627\u062D\u062A\u0641\u0627\u0644\u064A\u0629 \u0641\u062E\u0645\u0629 \u062A\u0645\u0646\u062D \u062D\u0636\u0648\u0631\u0627\u064B \u0645\u0645\u064A\u0632\u0627\u064B \u0641\u064A \u062C\u0644\u0633\u0627\u062A \u0627\u0644\u062A\u0635\u0648\u064A\u0631 \u0648\u062D\u0641\u0644 \u0627\u0644\u062A\u062E\u0631\u062C.",
+    basePrice: 3200,
+    imageUrl: ROBE_IMAGE_PATH,
+    options: [
+      { label: "\u0631\u0648\u0628 \u062E\u0644\u064A\u062C\u064A", price: 3200 },
+      { label: "\u0631\u0648\u0628 \u0639\u0627\u062F\u064A", price: 2500 }
+    ],
+    secondaryLabel: "\u0627\u0644\u0641\u0626\u0629 \u0648\u0627\u0644\u0645\u0642\u0627\u0633",
+    secondaryOptions: [
+      "\u0646\u0633\u0627\u0626\u064A \xB7 S",
+      "\u0646\u0633\u0627\u0626\u064A \xB7 M",
+      "\u0646\u0633\u0627\u0626\u064A \xB7 L",
+      "\u0646\u0633\u0627\u0626\u064A \xB7 XL",
+      "\u0631\u062C\u0627\u0644\u064A \xB7 M",
+      "\u0631\u062C\u0627\u0644\u064A \xB7 L",
+      "\u0631\u062C\u0627\u0644\u064A \xB7 XL",
+      "\u0631\u062C\u0627\u0644\u064A \xB7 XXL",
+      "\u0645\u0642\u0627\u0633 \u062E\u0627\u0635"
+    ]
+  },
+  {
+    id: "cap-custom-1",
+    category: "cap",
+    branch: "Forme V",
+    name: "\u0642\u0628\u0639\u0629 \u062A\u062E\u0631\u062C \u0645\u062E\u0635\u0635\u0629 (Forme V)",
+    description: "\u0642\u0628\u0639\u0629 \u0645\u062D\u0643\u0645\u0629 \u0627\u0644\u0647\u064A\u0643\u0644 \u0628\u0634\u0631\u0627\u0628\u0629 \u062D\u0631\u064A\u0631\u064A\u0629 \u0645\u062A\u062F\u0644\u064A\u0629\u061B \u0627\u062E\u062A\u0631 \u0627\u0644\u0644\u0648\u0646 \u0627\u0644\u0645\u0646\u0627\u0633\u0628 \u0644\u0637\u0642\u0645\u0643 \u0648\u0623\u062F\u062E\u0644 \u0645\u062D\u064A\u0637 \u0627\u0644\u0631\u0623\u0633 \u0628\u062F\u0642\u0629.",
+    basePrice: 1500,
+    imageUrl: CAP_IMAGE_PATH,
+    options: [
+      { label: "\u0642\u0628\u0639\u0629 Forme V", price: 1500 },
+      { label: "\u0642\u0628\u0639\u0629 \u062A\u0648\u0643\u0633\u064A\u062F\u0648", price: 1600 }
+    ],
+    supportsColorSwatches: true,
+    supportsHeadCircumference: true
+  },
+  {
+    id: "acc-bouquet-1",
+    category: "accessories",
+    branch: "\u0648\u0631\u062F",
+    name: "\u0628\u0627\u0642\u0629 \u0648\u0631\u062F \u0627\u0644\u062A\u062E\u0631\u062C \u0627\u0644\u0645\u062E\u0635\u0635\u0629",
+    description: "\u062A\u0646\u0633\u064A\u0642 \u0641\u0627\u062E\u0631 \u0645\u0646 \u0627\u0644\u0648\u0631\u062F \u0627\u0644\u0637\u0628\u064A\u0639\u064A \u0623\u0648 \u0627\u0644\u062F\u0627\u0626\u0645 \u0628\u0623\u0644\u0648\u0627\u0646 \u0645\u062A\u0646\u0627\u063A\u0645\u0629 \u0645\u0639 \u0648\u0634\u0627\u062D\u0643 \u0648\u0628\u0637\u0627\u0642\u0629 \u062A\u0647\u0646\u0626\u0629 \u0645\u062E\u0635\u0635\u0629.",
+    basePrice: 1500,
+    imageUrl: BOUQUET_IMAGE_PATH,
+    options: [
+      { label: "\u062A\u0646\u0633\u064A\u0642 \u0643\u0644\u0627\u0633\u064A\u0643\u064A", price: 1500 },
+      { label: "\u062A\u0646\u0633\u064A\u0642 \u0645\u0644\u0643\u064A \u0645\u0639 \u0628\u0637\u0627\u0642\u0629", price: 2200 }
+    ],
+    secondaryLabel: "\u0646\u0648\u0639 \u0627\u0644\u0648\u0631\u062F",
+    secondaryOptions: ["\u0648\u0631\u062F \u062F\u0627\u0626\u0645 \u0641\u0627\u062E\u0631", "\u0648\u0631\u062F \u0637\u0628\u064A\u0639\u064A \u0645\u0648\u0633\u0645\u064A"]
+  }
+];
+const DEFAULT_STORE_STATE = {
+  version: 2,
+  logoUrl: "",
+  studioBgUrl: "",
+  copy: DEFAULT_COPY,
+  products: DEFAULT_PRODUCTS,
+  sectionOrder: ["catalog", "studio", "howToOrder", "pricing"],
+  customTexts: {},
+  customImages: {}
+};
+const HOW_TO_ORDER_STEPS = [
+  {
+    id: "step1",
+    num: "01",
+    title: "\u0627\u062E\u062A\u0631 \u0627\u0644\u0645\u0648\u062F\u064A\u0644 \u0648\u062E\u0635\u0651\u0635 \u062A\u0641\u0627\u0635\u064A\u0644\u0643",
+    desc: "\u0627\u062E\u062A\u0631 \u0627\u0644\u0648\u0634\u0627\u062D \u0623\u0648 \u0627\u0644\u0631\u0648\u0628 \u0623\u0648 \u0628\u0627\u0642\u0629 \u0627\u0644\u062A\u062E\u0631\u062C\u060C \u0648\u062D\u062F\u062F \u0644\u0648\u0646 \u0627\u0644\u0642\u0645\u0627\u0634 \u0648\u0627\u0644\u062A\u0637\u0631\u064A\u0632 \u0648\u0627\u0643\u062A\u0628 \u0627\u0633\u0645\u0643 \u0623\u0648 \u0623\u0631\u0641\u0642 \u0634\u0639\u0627\u0631 \u062C\u0627\u0645\u0639\u062A\u0643."
+  },
+  {
+    id: "step2",
+    num: "02",
+    title: "\u0623\u0631\u0633\u0644 \u0627\u0644\u0637\u0644\u0628 \u0645\u062C\u0627\u0646\u0627\u064B \u0628\u062F\u0648\u0646 \u062A\u0639\u0642\u064A\u062F",
+    desc: "\u0623\u0636\u0641 \u0627\u0644\u0642\u0637\u0639 \u0625\u0644\u0649 \u0627\u0644\u062D\u0642\u064A\u0628\u0629 \u0648\u0623\u062F\u062E\u0644 \u0627\u0633\u0645\u0643 \u0648\u0648\u0644\u0627\u064A\u062A\u0643 \u0648\u0631\u0642\u0645 \u0647\u0627\u062A\u0641\u0643\u061B \u0644\u0627 \u064A\u0648\u062C\u062F \u0623\u064A \u062F\u0641\u0639 \u0625\u0644\u0643\u062A\u0631\u0648\u0646\u064A \u0625\u0644\u0632\u0627\u0645\u064A \u0639\u0646\u062F \u0627\u0644\u0625\u0631\u0633\u0627\u0644."
+  },
+  {
+    id: "step3",
+    num: "03",
+    title: "\u0627\u0644\u062A\u0623\u0643\u064A\u062F \u0639\u0628\u0631 \u0648\u0627\u062A\u0633\u0627\u0628 \u0648\u0627\u0644\u062A\u0648\u0635\u064A\u0644",
+    desc: "\u0646\u062A\u0648\u0627\u0635\u0644 \u0645\u0639\u0643 \u0644\u062A\u0623\u0643\u064A\u062F \u0627\u0644\u0645\u0642\u0627\u0633 \u0648\u0627\u0644\u062E\u0637 \u0628\u0639\u0631\u0628\u0648\u0646 50%\u060C \u0648\u0646\u062C\u0647\u0651\u0632 \u0637\u0644\u0628\u0643 \u0648\u0646\u0648\u0635\u0644\u0647 \u0644\u0643 \u0641\u064A \u0627\u0644\u0645\u0648\u0639\u062F \u0627\u0644\u0645\u0646\u0627\u0633\u0628 \u0644\u0640 58 \u0648\u0644\u0627\u064A\u0629."
+  }
+];
+const PRICING_TABLE_ROWS = [
+  { name: "\u0634\u0627\u0644 \u0645\u064A\u0633 \u0645\u0639 \u0627\u0644\u0642\u0628\u0639\u0629", crepe: 3800, dan: 4300 },
+  { name: "\u0634\u0627\u0644 \u0639\u0627\u062F\u064A \u0628\u062F\u0648\u0646 \u0638\u0647\u0631 \u0645\u0639 \u0627\u0644\u0642\u0628\u0639\u0629", crepe: 3900, dan: 4400 },
+  { name: "\u0634\u0627\u0644 \u0628\u0627\u0644\u0638\u0647\u0631 \u0645\u0639 \u0627\u0644\u0642\u0628\u0639\u0629", crepe: 4500, dan: 4900 },
+  { name: "\u0631\u0648\u0628 \u0627\u0644\u062A\u062E\u0631\u062C (\u0639\u0627\u062F\u064A / \u062E\u0644\u064A\u062C\u064A)", crepe: 2500, dan: 3200 },
+  { name: "\u0642\u0628\u0639\u0629 \u0645\u0646\u0641\u0631\u062F\u0629 / \u0628\u0627\u0642\u0629 \u0648\u0631\u062F \u0627\u0644\u062A\u062E\u0631\u062C", crepe: 1500, dan: 2200 }
+];
+const FAQ_ITEMS = [
+  {
+    q: "\u0643\u0645 \u0633\u0639\u0631 \u0634\u0627\u0644 \u0627\u0644\u062A\u062E\u0631\u062C \u0645\u0639 \u0627\u0644\u0642\u0628\u0639\u0629\u061F",
+    a: "\u062A\u0628\u062F\u0623 \u0623\u0633\u0639\u0627\u0631 \u0627\u0644\u0634\u0627\u0644\u0627\u062A \u0645\u0639 \u0627\u0644\u0642\u0628\u0639\u0629 \u0627\u0644\u0623\u0633\u0627\u0633\u064A\u0629 \u0648\u0627\u0644\u062A\u0637\u0631\u064A\u0632 \u0627\u0644\u0645\u062C\u0627\u0646\u064A \u0645\u0646 3,800 \u062F\u062C (\u0634\u0627\u0644 \u0645\u064A\u0633 \u0643\u0631\u064A\u0628) \u0648\u062A\u0635\u0644 \u0625\u0644\u0649 4,900 \u062F\u062C (\u0634\u0627\u0644 \u0628\u0627\u0644\u0638\u0647\u0631 \u0642\u0645\u0627\u0634 \u062F\u0627\u0646). \u0623\u0645\u0627 \u0627\u0644\u0631\u0648\u0628 \u0627\u0644\u0639\u0627\u062F\u064A \u0641\u0633\u0639\u0631\u0647 2,500 \u062F\u062C."
+  },
+  {
+    q: "\u0647\u0644 \u0623\u062F\u0641\u0639 \u0623\u064A \u0645\u0628\u0644\u063A \u0639\u0646\u062F \u0625\u0631\u0633\u0627\u0644 \u0627\u0644\u0637\u0644\u0628 \u0645\u0646 \u0627\u0644\u0645\u0648\u0642\u0639\u061F",
+    a: "\u0644\u0627. \u062A\u0631\u0633\u0644 \u0637\u0644\u0628\u0643 \u0645\u062C\u0627\u0646\u0627\u064B \u062F\u0648\u0646 \u062F\u0641\u0639 \u0625\u0644\u0643\u062A\u0631\u0648\u0646\u064A\u060C \u0648\u0646\u062A\u0648\u0627\u0635\u0644 \u0645\u0639\u0643 \u0639\u0628\u0631 WhatsApp \u0644\u0645\u0631\u0627\u062C\u0639\u0629 \u0627\u0644\u0645\u0642\u0627\u0633 \u0648\u0627\u0644\u062E\u0637 \u0648\u0627\u0644\u0623\u0644\u0648\u0627\u0646. \u064A\u062A\u0645 \u062A\u0623\u0643\u064A\u062F \u0627\u0644\u0637\u0644\u0628 \u0628\u062F\u0641\u0639 \u0639\u0631\u0628\u0648\u0646 50% \u0641\u0642\u0637 \u0648\u0627\u0644\u0628\u0627\u0642\u064A \u0639\u0646\u062F \u0627\u0644\u062A\u0633\u0644\u064A\u0645."
+  },
+  {
+    q: "\u0643\u0645 \u062A\u0633\u062A\u063A\u0631\u0642 \u0645\u062F\u0629 \u0627\u0644\u062A\u062C\u0647\u064A\u0632 \u0648\u0647\u0644 \u0627\u0644\u062A\u0648\u0635\u064A\u0644 \u0645\u062A\u0627\u062D \u0644\u0643\u0644 \u0627\u0644\u0648\u0644\u0627\u064A\u0627\u062A\u061F",
+    a: "\u0645\u062F\u0629 \u0627\u0644\u062A\u062C\u0647\u064A\u0632 \u0648\u0627\u0644\u062A\u0637\u0631\u064A\u0632 7 \u0623\u064A\u0627\u0645 \u0639\u0644\u0649 \u0627\u0644\u0623\u0642\u0644 \u062D\u0633\u0628 \u0627\u0644\u0636\u063A\u0637 \u0648\u0645\u0648\u0639\u062F \u0627\u0644\u062D\u0641\u0644 \u0627\u0644\u0630\u064A \u062A\u062E\u062A\u0627\u0631\u0647. \u0627\u0644\u062A\u0648\u0635\u064A\u0644 \u0645\u062A\u0627\u062D \u0644\u062C\u0645\u064A\u0639 \u0627\u0644\u0648\u0644\u0627\u064A\u0627\u062A \u0627\u0644\u0640 58 \u0641\u064A \u0627\u0644\u062C\u0632\u0627\u0626\u0631 \u0633\u0648\u0627\u0621 \u0625\u0644\u0649 \u0627\u0644\u0645\u0646\u0632\u0644 \u0623\u0648 \u0625\u0644\u0649 \u0645\u0643\u062A\u0628 \u0634\u0631\u0643\u0629 \u0627\u0644\u062A\u0648\u0635\u064A\u0644."
+  },
+  {
+    q: "\u0647\u0644 \u064A\u0645\u0643\u0646 \u0625\u0636\u0627\u0641\u0629 \u0634\u0639\u0627\u0631 \u0627\u0644\u062C\u0627\u0645\u0639\u0629 \u0623\u0648 \u062A\u0637\u0631\u064A\u0632 \u0645\u062E\u0635\u0635 \u0639\u0644\u0649 \u0627\u0644\u0638\u0647\u0631\u061F",
+    a: "\u0646\u0639\u0645 \u0628\u0627\u0644\u062A\u0623\u0643\u064A\u062F\u060C \u064A\u0645\u0643\u0646\u0643 \u0625\u0631\u0641\u0627\u0642 \u0634\u0639\u0627\u0631 \u062C\u0627\u0645\u0639\u062A\u0643 \u0623\u0648 \u062A\u062E\u0635\u0635\u0643 \u0623\u062B\u0646\u0627\u0621 \u062A\u0623\u0643\u064A\u062F \u0627\u0644\u0637\u0644\u0628 \u0639\u0628\u0631 WhatsApp \u0628\u0639\u062F \u0625\u0631\u0633\u0627\u0644\u0647 \u0645\u0646 \u0627\u0644\u0633\u0644\u0629\u060C \u0648\u0633\u0646\u0631\u0633\u0644 \u0644\u0643 \u0645\u0639\u0627\u064A\u0646\u0629 \u0648\u0627\u0636\u062D\u0629 \u0642\u0628\u0644 \u0627\u0644\u062A\u0646\u0641\u064A\u0630."
+  }
+];
+const ALGERIA_WILAYAS = [
+  "01 - \u0623\u062F\u0631\u0627\u0631",
+  "02 - \u0627\u0644\u0634\u0644\u0641",
+  "03 - \u0627\u0644\u0623\u063A\u0648\u0627\u0637",
+  "04 - \u0623\u0645 \u0627\u0644\u0628\u0648\u0627\u0642\u064A",
+  "05 - \u0628\u0627\u062A\u0646\u0629",
+  "06 - \u0628\u062C\u0627\u064A\u0629",
+  "07 - \u0628\u0633\u0643\u0631\u0629",
+  "08 - \u0628\u0634\u0627\u0631",
+  "09 - \u0627\u0644\u0628\u0644\u064A\u062F\u0629",
+  "10 - \u0627\u0644\u0628\u0648\u064A\u0631\u0629",
+  "11 - \u062A\u0645\u0646\u0631\u0627\u0633\u062A",
+  "12 - \u062A\u0628\u0633\u0629",
+  "13 - \u062A\u0644\u0645\u0633\u0627\u0646",
+  "14 - \u062A\u064A\u0627\u0631\u062A",
+  "15 - \u062A\u064A\u0632\u064A \u0648\u0632\u0648",
+  "16 - \u0627\u0644\u062C\u0632\u0627\u0626\u0631",
+  "17 - \u0627\u0644\u062C\u0644\u0641\u0629",
+  "18 - \u062C\u064A\u062C\u0644",
+  "19 - \u0633\u0637\u064A\u0641",
+  "20 - \u0633\u0639\u064A\u062F\u0629",
+  "21 - \u0633\u0643\u064A\u0643\u062F\u0629",
+  "22 - \u0633\u064A\u062F\u064A \u0628\u0644\u0639\u0628\u0627\u0633",
+  "23 - \u0639\u0646\u0627\u0628\u0629",
+  "24 - \u0642\u0627\u0644\u0645\u0629",
+  "25 - \u0642\u0633\u0646\u0637\u064A\u0646\u0629",
+  "26 - \u0627\u0644\u0645\u062F\u064A\u0629",
+  "27 - \u0645\u0633\u062A\u063A\u0627\u0646\u0645",
+  "28 - \u0627\u0644\u0645\u0633\u064A\u0644\u0629",
+  "29 - \u0645\u0639\u0633\u0643\u0631",
+  "30 - \u0648\u0631\u0642\u0644\u0629",
+  "31 - \u0648\u0647\u0631\u0627\u0646",
+  "32 - \u0627\u0644\u0628\u064A\u0636",
+  "33 - \u0625\u0644\u064A\u0632\u064A",
+  "34 - \u0628\u0631\u062C \u0628\u0648\u0639\u0631\u064A\u0631\u064A\u062C",
+  "35 - \u0628\u0648\u0645\u0631\u062F\u0627\u0633",
+  "36 - \u0627\u0644\u0637\u0627\u0631\u0641",
+  "37 - \u062A\u0646\u062F\u0648\u0641",
+  "38 - \u062A\u064A\u0633\u0645\u0633\u064A\u0644\u062A",
+  "39 - \u0627\u0644\u0648\u0627\u062F\u064A",
+  "40 - \u062E\u0646\u0634\u0644\u0629",
+  "41 - \u0633\u0648\u0642 \u0623\u0647\u0631\u0627\u0633",
+  "42 - \u062A\u064A\u0628\u0627\u0632\u0629",
+  "43 - \u0645\u064A\u0644\u0629",
+  "44 - \u0639\u064A\u0646 \u0627\u0644\u062F\u0641\u0644\u0649",
+  "45 - \u0627\u0644\u0646\u0639\u0627\u0645\u0629",
+  "46 - \u0639\u064A\u0646 \u062A\u0645\u0648\u0634\u0646\u062A",
+  "47 - \u063A\u0631\u062F\u0627\u064A\u0629",
+  "48 - \u063A\u0644\u064A\u0632\u0627\u0646",
+  "49 - \u062A\u064A\u0645\u064A\u0645\u0648\u0646",
+  "50 - \u0628\u0631\u062C \u0628\u0627\u062C\u064A \u0645\u062E\u062A\u0627\u0631",
+  "51 - \u0623\u0648\u0644\u0627\u062F \u062C\u0644\u0627\u0644",
+  "52 - \u0628\u0646\u064A \u0639\u0628\u0627\u0633",
+  "53 - \u0639\u064A\u0646 \u0635\u0627\u0644\u062D",
+  "54 - \u0639\u064A\u0646 \u0642\u0632\u0627\u0645",
+  "55 - \u062A\u0642\u0631\u062A",
+  "56 - \u062C\u0627\u0646\u062A",
+  "57 - \u0627\u0644\u0645\u063A\u064A\u0631",
+  "58 - \u0627\u0644\u0645\u0646\u064A\u0639\u0629"
+];
+function createDefaultDeliveryPricing(defaultHomePrice = 0, defaultOfficePrice = 0) {
+  const safeHome = Math.max(0, Math.round(Number(defaultHomePrice) || 0));
+  const safeOffice = Math.max(0, Math.round(Number(defaultOfficePrice) || 0));
+  const wilayas = {};
+  for (const wilaya of ALGERIA_WILAYAS) {
+    wilayas[wilaya] = { home: safeHome, office: safeOffice };
+  }
+  return {
+    freeDelivery: false,
+    deliveryLocked: false,
+    defaultHomePrice: safeHome,
+    defaultOfficePrice: safeOffice,
+    wilayas
+  };
+}
+const DEFAULT_DELIVERY_PRICING = createDefaultDeliveryPricing(0, 0);
+function getWilayaDeliveryFee(pricing, wilaya, deliveryMethod) {
+  if (!pricing || pricing.deliveryLocked || pricing.freeDelivery) return 0;
+  const rate = pricing.wilayas?.[wilaya];
+  const raw = rate !== void 0 ? deliveryMethod === "office" ? rate.office : rate.home : deliveryMethod === "office" ? pricing.defaultOfficePrice : pricing.defaultHomePrice;
+  const num = Number(raw);
+  return Number.isFinite(num) ? Math.max(0, Math.round(num)) : 0;
+}
+const SHIPPING_COMPANY_PRESETS = [
+  "Yalidine",
+  "ZR Express",
+  "Guepex",
+  "Maystro",
+  "Nord et Ouest"
+];
+export {
+  ALGERIA_WILAYAS,
+  BOUQUET_IMAGE_PATH,
+  BRAND_LOGO_PATH,
+  CAP_IMAGE_PATH,
+  CAP_SWATCHES,
+  CATEGORY_BRANCHES,
+  CATEGORY_IMAGE_BG_PRESETS,
+  CATEGORY_LABELS,
+  DEFAULT_CAP_OPTION_PRICES,
+  DEFAULT_CATEGORY_PAUSE_BADGE,
+  DEFAULT_COPY,
+  DEFAULT_DELIVERY_PRICING,
+  DEFAULT_DYNAMIC_SETTINGS,
+  DEFAULT_GOWN_COLORS,
+  DEFAULT_PAUSE_MESSAGE,
+  DEFAULT_PAYMENT_INFO,
+  DEFAULT_PRODUCTS,
+  DEFAULT_PROMO_SETTINGS,
+  DEFAULT_SEASON_BANNER_TEXT,
+  DEFAULT_SHOWCASE_BADGE,
+  DEFAULT_SHOWCASE_PHOTOS,
+  DEFAULT_SHOWCASE_SUBTITLE,
+  DEFAULT_SHOWCASE_TITLE,
+  DEFAULT_STOLE_COLORS,
+  DEFAULT_STOLE_GOWN_COLORS,
+  DEFAULT_STORE_STATE,
+  DEFAULT_TESTIMONIALS,
+  FAQ_ITEMS,
+  HERO_BANNER_IMAGE_PATH,
+  HERO_BLACK_GOLD_IMAGE_PATH,
+  HERO_IMAGE_PATH,
+  HOW_TO_ORDER_STEPS,
+  PRICING_TABLE_ROWS,
+  ROBE_IMAGE_PATH,
+  ROYAL_FIVE_STOLE_COLORS,
+  SHAWL_AMERICAN_IMAGE_PATH,
+  SHAWL_BACK_IMAGE_PATH,
+  SHAWL_IMAGE_PATH,
+  SHAWL_MISS_IMAGE_PATH,
+  SHAWL_REGULAR_IMAGE_PATH,
+  SHIPPING_COMPANY_PRESETS,
+  STOLE_COLORS,
+  STOLE_STUDIO_MODELS,
+  THREAD_COLORS,
+  WHATSAPP_NUMBER,
+  createDefaultDeliveryPricing,
+  formatWhatsAppNumber,
+  getWilayaDeliveryFee,
+  normalizeWhatsAppInput,
+  sanitizeSocialUrl
+};

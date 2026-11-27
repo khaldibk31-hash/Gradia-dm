@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#762b43" />
+  <meta name="description" content="DG by Douaa - متجر أزياء التخرج في الجزائر: أوشحة، روب وقبعات بتصاميم مخصصة." />
+  <title>DG by Douaa | أزياء التخرج في الجزائر</title>
+<script>
+  document.write('<scr' + 'ipt src="https:' + '//cdn.jsdelivr.net/npm/' + String.fromCharCode(64) + 'supabase/supabase-js' + String.fromCharCode(64) + '2"></scr' + 'ipt>');
+</script>
+
+
+
+
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+:root {
+  --bg: #fbf8f3;
+  --surface: #ffffff;
+  --surface-hover: #f5eee5;
+  --text: #211b19;
+  --muted: #766b63;
+  --border: #e8ddd1;
+  --accent: #762b43;
+  --accent-hover: #542033;
+  --green: #18734b;
+  --gold: #b99a65;
+}
+
+
+
+      
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); line-height: 1.65; }
+
+    /* الهيدر العلوي */
+    header {
+      position: sticky; top: 0; z-index: 100; background: rgba(255, 250, 251, 0.92);
+      backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+      padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+    }
+    .brand-wrap { display: flex; align-items: center; gap: 8px; }
+    .brand-wrap img { height: 40px; border-radius: 6px; }
+    .brand { font-weight: 800; font-size: 1.2rem; letter-spacing: 0.5px; color: var(--text); }
+    .nav-links { display: flex; gap: 14px; font-size: 0.85rem; font-weight: 700; }
+    .nav-links a { color: var(--muted); text-decoration: none; transition: 0.2s; }
+    .nav-links a:hover { color: var(--accent); }
+    
+    .hdr-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .btn-gold { background: var(--accent); color: #fff; border: none; padding: 8px 16px; border-radius: 50px; font-weight: 800; cursor: pointer; font-size: 0.82rem; text-decoration: none; display: inline-block; transition: 0.2s; }
+    .btn-gold:hover { background: var(--accent-hover); }
+    .btn-green { background: var(--green); color: #fff; border: none; padding: 8px 16px; border-radius: 50px; font-weight: 700; cursor: pointer; font-size: 0.82rem; }
+    .btn-dark { background: var(--surface-hover); color: var(--text); border: 1px solid var(--border); padding: 9px 20px; border-radius: 50px; font-weight: 700; font-size: 0.86rem; text-decoration: none; display: inline-block; }
+
+    .edit-tool { display: none !important; }
+    #save-cloud-btn { display:none !important; }
+    body.admin-mode .edit-tool { display: inline-flex !important; align-items: center; justify-content: center; }
+    .admin-toolbar { display:none; position:sticky; top:68px; z-index:90; background:#211b19; color:#fff; padding:10px 14px; align-items:center; justify-content:space-between; gap:10px; box-shadow:0 8px 22px rgba(0,0,0,.16); }
+    body.admin-mode .admin-toolbar { display:flex; }
+    .admin-toolbar small { color:#e9d8c5; }
+    .admin-toolbar-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .admin-toolbar button { border:0; border-radius:30px; padding:7px 13px; font-weight:800; cursor:pointer; font-family:inherit; }
+    .admin-save { background:#d7bd8b; color:#211b19; }
+    .admin-logout { background:#fff; color:#542033; }
+    button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline:3px solid #d7bd8b; outline-offset:2px; }
+    .p-card { transition:transform .2s ease, box-shadow .2s ease; }
+    .p-card:hover { transform:translateY(-3px); box-shadow:0 12px 28px rgba(57,39,29,.12); }
+    body.admin-mode [data-edit="1"] { border-bottom: 1.5px dashed var(--accent); background: rgba(185, 154, 101, 0.08); padding: 0 3px; border-radius: 4px; }
+
+    .container { max-width: 1120px; margin: auto; padding: 0 18px; }
+    
+    /* قسم البطل (Hero) */
+    .hero { text-align: center; padding: 64px 20px 42px; max-width: 820px; margin: 22px auto 0; background: radial-gradient(ellipse at top, #f2e8dc 0%, #fbf8f3 68%); border-radius: 0 0 28px 28px; }
+    .pill { display: inline-block; background: var(--surface); border: 1px solid var(--border); padding: 5px 16px; border-radius: 50px; font-size: 0.8rem; font-weight: 700; color: var(--accent); margin-bottom: 14px; }
+    .hero h1 { font-size: 2.2rem; font-weight: 900; line-height: 1.3; margin-bottom: 12px; color: var(--text); }
+    .hero p { color: var(--muted); font-size: 0.96rem; margin-bottom: 24px; }
+    .hero-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 18px; }
+    .price-tags { display: flex; gap: 16px; justify-content: center; font-size: 0.88rem; color: var(--muted); }
+    .price-tags b { color: var(--accent); }
+
+    /* بطاقات المميزات الفخمة */
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 24px 0 44px; }
+    .f-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; box-shadow: 0 8px 24px rgba(57, 39, 29, 0.07); }
+    .f-card h4 { font-size: 0.92rem; font-weight: 800; margin-bottom: 6px; color: var(--accent); }
+    .f-card p { font-size: 0.8rem; color: var(--muted); }
+
+    .sec-head { text-align: center; margin: 44px 0 22px; }
+    .sec-head h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 6px; color: var(--text); }
+    .sec-head p { color: var(--muted); font-size: 0.9rem; }
+
+    .cat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 40px; }
+    .cat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 8px 24px rgba(57, 39, 29, 0.07); }
+    .cat-card h3 { font-size: 1.2rem; font-weight: 800; margin: 6px 0; color: var(--text); }
+    .cat-card p { font-size: 0.85rem; color: var(--muted); margin-bottom: 14px; }
+    .cat-foot { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: 700; }
+
+    /* استوديو التصميم التفاعلي الداكن */
+    .studio-box { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 22px; margin: 36px 0; align-items: center; box-shadow: 0 12px 32px rgba(57, 39, 29, 0.08); }
+.preview-area { background: linear-gradient(135deg, #fff5f8 0%, #fce7f3 100%); border: 1px dashed var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; min-height: 270px; padding: 20px; }
+
+    .stole-shape { width: 135px; height: 225px; background: #111; color: var(--accent); clip-path: polygon(0 0, 36% 0, 50% 45%, 64% 0, 100% 0, 82% 100%, 50% 72%, 18% 100%); display: flex; justify-content: space-between; padding: 16px 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); transition: 0.3s; }
+    .stole-txt { writing-mode: vertical-rl; font-family: 'Amiri', serif; font-size: 1.05rem; font-weight: 700; text-align: center; max-height: 165px; overflow: hidden; }
+    .ctrl-group label { display: block; font-size: 0.82rem; font-weight: 700; margin: 9px 0 4px; color: var(--muted); }
+    .ctrl-group input, .ctrl-group select { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.88rem; background: var(--bg); color: var(--text); }
+    .swatches { display: flex; gap: 8px; margin-top: 6px; }
+    .swatch { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid var(--border); }
+
+    .sec-block { margin: 36px 0; }
+    .sec-hdr { display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid var(--border); padding-bottom: 8px; margin-bottom: 14px; gap: 8px; }
+    .branch-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 14px; }
+    .tab-pill { background: var(--surface); border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 50px; font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+    .tab-pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    
+.prod-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+@media(min-width: 650px) { .prod-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.p-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 14px rgba(107, 16, 50, 0.05); }
+.img-wrap { position: relative; width: 100%; aspect-ratio: 3/4; background: #f9eef2; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.img-wrap img, .p-img { width: 100%; height: 100%; object-fit: contain; padding: 6px; }
+
+    .chg-img-btn { position: absolute; bottom: 8px; right: 8px; background: var(--accent); color: #fff; border: none; padding: 4px 10px; border-radius: 50px; font-size: 0.75rem; font-weight: 800; cursor: pointer; }
+    .del-btn { position: absolute; top: 8px; left: 8px; background: #dc2626; color: #fff; border: none; width: 26px; height: 26px; border-radius: 50%; font-weight: bold; cursor: pointer; z-index: 5; }
+    .p-body { padding: 16px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+    .p-tag { font-size: 0.72rem; background: var(--bg); border: 1px solid var(--border); color: var(--accent); padding: 2px 8px; border-radius: 6px; font-weight: 700; width: fit-content; margin-bottom: 6px; }
+    .p-opts { display: flex; gap: 6px; margin-bottom: 10px; }
+    .p-opts select { flex: 1; padding: 6px; border-radius: 6px; border: 1px solid var(--border); font-size: 0.78rem; background: var(--bg); color: var(--text); }
+
+    .tbl-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 18px; overflow-x: auto; box-shadow: 0 8px 24px rgba(57, 39, 29, 0.07); }
+    table { width: 100%; border-collapse: collapse; text-align: right; font-size: 0.86rem; }
+    th, td { padding: 12px; border-bottom: 1px solid var(--border); }
+    th { font-weight: 800; color: var(--accent); background: rgba(245,158,11,0.05); }
+
+    details { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    summary { font-weight: 800; cursor: pointer; font-size: 0.9rem; color: var(--text); }
+    details p { margin-top: 8px; font-size: 0.84rem; color: var(--muted); }
+
+    /* المودالز والنوافذ */
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; padding: 14px; backdrop-filter: blur(5px); }
+    .m-box { background: var(--surface); border: 1px solid var(--border); width: 100%; max-width: 400px; border-radius: 18px; padding: 20px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+    .m-box input, .m-box textarea, .m-box select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; font-size: 0.88rem; background: var(--bg); color: var(--text); }
+    .m-btns { display: flex; gap: 8px; margin-top: 10px; }
+    .m-btns button { flex: 1; padding: 10px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; }
+
+    /* زر الواتساب العائم الجمالي */
+    .float-wa {
+      position: fixed; bottom: 20px; left: 20px; background: #25d366; color: #fff;
+      width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem; box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4); z-index: 99; text-decoration: none; transition: 0.3s;
+    }
+    .float-wa:hover { transform: scale(1.1); }
+
+    footer { text-align: center; padding: 36px 16px; border-top: 1px solid var(--border); margin-top: 48px; font-size: 0.84rem; color: var(--muted); }
+    @media (max-width: 680px) {
+      header { padding:10px 12px; }
+      .studio-box { grid-template-columns: 1fr; padding:14px; }
+      .nav-links { display: none; }
+      .hero { padding:44px 16px 30px; margin-top:10px; }
+      .hero h1 { font-size:1.65rem; }
+      .price-tags { flex-direction:column; gap:4px; }
+      .cat-grid { grid-template-columns:1fr; }
+      .admin-toolbar { top:62px; align-items:flex-start; flex-direction:column; }
+      .admin-toolbar-actions { width:100%; }
+      .admin-toolbar button { flex:1; }
+      .tbl-box { padding:8px; }
+      th,td { padding:8px 6px; font-size:.78rem; }
+    }
+    @media (prefers-reduced-motion: reduce) { *,*::before,*::after { scroll-behavior:auto !important; transition:none !important; } }
+  </style>
+</head>
+<body>
+  <input type="file" id="logo-in" accept="image/*" style="display:none" onchange="setLogo(event)">
+  <input type="file" id="card-img-in" accept="image/*" style="display:none" onchange="applyCardImg(event)">
+  <input type="file" id="studio-img-in" accept="image/*" style="display:none" onchange="setStudioImg(event)">
+
+  <!-- زر واتساب عائم للتواصل السريع -->
+  <a href="https://wa.me/213673423172" target="_blank" class="float-wa" title="تواصل عبر الواتساب">💬</a>
+
+  <header>
+    <div class="brand-wrap">
+      <img id="site-logo" src="" style="display:none;">
+      <span class="brand" data-edit="1">DG BY DOUAA</span>
+      <button class="btn-gold edit-tool" onclick="document.getElementById('logo-in').click()">+ اللوقو</button>
+    </div>
+    <nav class="nav-links">
+      <a href="#sec-shawl">الوشاح</a>
+      <a href="#sec-robe">الروب</a>
+      <a href="#studio-sec">صمّم وشاحك</a>
+      <a href="#prices-sec">الأسعار</a>
+    </nav>
+    <div class="hdr-actions">
+    <button id="save-cloud-btn" class="btn-green edit-tool" onclick="publishToCloud()">☁ حفظ ونشر</button>
+
+      <button class="btn-gold" onclick="openCart()">🛍 السلة (<span id="c-cnt">0</span>)</button>
+    </div>
+  </header>
+
+  <div class="admin-toolbar" id="admin-toolbar" role="region" aria-label="أدوات الإدارة">
+    <div><strong>لوحة إدارة DG by Douaa</strong><br><small>التغييرات تظهر للزبائن بعد الحفظ والنشر</small></div>
+    <div class="admin-toolbar-actions">
+      <button class="admin-save" id="admin-save-btn" onclick="publishToCloud()">☁ حفظ ونشر التعديلات</button>
+      <button class="admin-logout" onclick="adminLogout()">تسجيل الخروج</button>
+    </div>
+  </div>
+
+  <div id="editable-main">
+    <section class="hero">
+      <div class="pill" data-edit="1">أزياء التخرج في الجزائر 🇩🇿</div>
+      <h1 data-edit="1">طقم تخرجك، بتصميمك أنت</h1>
+      <p data-edit="1">شال تخرج مع القبعة يُطرَّز عليه اسمك وشعار جامعتك بخط الثلث، وروب بمقاسك بدقة. أرسل طلبك الآن دون دفع، ونؤكده معك عبر WhatsApp.</p>
+      <div class="hero-btns">
+        <a href="#studio-sec" class="btn-gold">صمّم وشاحك الآن</a>
+        <a href="#sec-robe" class="btn-dark">اختر روبك</a>
+      </div>
+      <div class="price-tags">
+        <span>• الشال مع القبعة من <b>3,800 دج</b></span>
+        <span>• الروب <b>2,500 دج</b></span>
+      </div>
+    </section>
+
+    <main class="container">
+      <div class="features">
+        <div class="f-card"><h4 data-edit="1">🛡 لا تدفع شيئاً عند الطلب</h4><p data-edit="1">نراجع التفاصيل معك عبر WhatsApp أولاً</p></div>
+        <div class="f-card"><h4 data-edit="1">💳 عربون 30% فقط</h4><p data-edit="1">بعد التأكيد، والباقي عند التسليم</p></div>
+        <div class="f-card"><h4 data-edit="1">📅 أنت تختار يوم التسليم</h4><p data-edit="1">من الأيام المتاحة، بعد 7 أيام على الأقل</p></div>
+        <div class="f-card"><h4 data-edit="1">🚚 توصيل لكل الولايات</h4><p data-edit="1">إلى المنزل أو الاستلام من المكتب</p></div>
+      </div>
+
+      <div class="sec-head">
+        <h2 data-edit="1">ابدأ بالقطعة التي تحتاجها</h2>
+        <p data-edit="1">الوشاح يأتي مع قبعته، والروب بمقاسك، ويمكنك جمعها في طلب واحد.</p>
+      </div>
+      <div class="cat-grid">
+        <div class="cat-card">
+          <div><h3 data-edit="1">الوشاح</h3><p data-edit="1">شال ميس أو عادي أو بالظهر مع القبعة، بقماش الكريب أو الدان، وتصمّمه باسمك وشعارك.</p></div>
+          <div class="cat-foot"><span style="color:var(--accent); font-weight:800;">من 3,800 دج</span><a href="#sec-shawl" class="btn-gold" style="padding:6px 14px; font-size:0.78rem;">اختر شالك</a></div>
+        </div>
+        <div class="cat-card">
+          <div><h3 data-edit="1">الروب</h3><p data-edit="1">روب التخرج بستة ألوان، بمقاس رجالي أو نسائي أو بقياساتك الخاصة.</p></div>
+          <div class="cat-foot"><span style="color:var(--accent); font-weight:800;">2,500 دج</span><a href="#sec-robe" class="btn-dark" style="padding:6px 14px; font-size:0.78rem;">اختر روبك</a></div>
+        </div>
+        <div class="cat-card">
+          <div><h3 data-edit="1">ورد وإكسسوارات</h3><p data-edit="1">قبعات تخرج منفردة وتنسيقات مخصصة ليوم تخرجك.</p></div>
+          <div class="cat-foot"><span style="color:var(--accent); font-weight:800;">1,500 دج</span><a href="#sec-acc" class="btn-dark" style="padding:6px 14px; font-size:0.78rem;">تصفح</a></div>
+        </div>
+      </div>
+
+      <!-- قسم 1: الوشاح -->
+      <div class="sec-block" id="sec-shawl">
+        <div class="sec-hdr">
+          <h3 data-edit="1">1. قسم الوشاح (مع القبعة)</h3>
+          <button class="btn-gold edit-tool" onclick="openProdModal('sec-shawl')">+ إضافة موديل</button>
+        </div>
+        <div class="branch-tabs">
+          <button class="tab-pill active" onclick="filterBranch(this,'sec-shawl','all')">الكل</button>
+          <button class="tab-pill" onclick="filterBranch(this,'sec-shawl','شال ميس')">شال ميس</button>
+          <button class="tab-pill" onclick="filterBranch(this,'sec-shawl','شال عادي')">شال عادي بدون ظهر</button>
+          <button class="tab-pill" onclick="filterBranch(this,'sec-shawl','شال بالظهر')">شال بالظهر</button>
+        </div>
+        <div class="prod-grid">
+          <div class="p-card" data-branch="شال ميس">
+            <button class="del-btn edit-tool" onclick="this.closest('.p-card').remove()">×</button>
+            <div class="img-wrap"><span>🎓</span><button class="chg-img-btn edit-tool" onclick="triggerCardImg(this)">+ صورة</button></div>
+            <div class="p-body">
+              <span class="p-tag" data-edit="1">شال ميس</span>
+              <h4 class="p-title" data-edit="1">شال ميس مع قبعة وتطريز مجاني</h4>
+              <p style="font-size:0.82rem;color:var(--muted);margin-bottom:8px;" data-edit="1">متوفر بقماش الكريب أو الدان مع قبعة دائرية أو مثلثة.</p>
+              <div class="p-opts">
+                <select onchange="updateCardPrice(this)"><option value="3800">كريب (3,800 دج)</option><option value="4300">دان (4,300 دج)</option></select>
+                <select><option>قبعة عادية</option><option>توكسيدو (+100 دج)</option></select>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <b class="price" style="color:var(--accent);" data-edit="1">3800 دج</b>
+                <button class="btn-gold" style="padding:6px 14px; font-size:0.8rem;" onclick="addCart(this)">أضف للسلة</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- قسم 2: الروب -->
+      <div class="sec-block" id="sec-robe">
+        <div class="sec-hdr">
+          <h3 data-edit="1">2. قسم الروب (رجالي ونسائي)</h3>
+          <button class="btn-gold edit-tool" onclick="openProdModal('sec-robe')">+ إضافة موديل</button>
+        </div>
+        <div class="branch-tabs">
+          <button class="tab-pill active" onclick="filterBranch(this,'sec-robe','all')">الكل</button>
+          <button class="tab-pill" onclick="filterBranch(this,'sec-robe','روب عادي')">الروب العادي</button>
+          <button class="tab-pill" onclick="filterBranch(this,'sec-robe','روب خليجي')">الروب الخليجي</button>
+        </div>
+        <div class="prod-grid">
+          <div class="p-card" data-branch="روب عادي">
+            <button class="del-btn edit-tool" onclick="this.closest('.p-card').remove()">×</button>
+            <div class="img-wrap"><span>🧥</span><button class="chg-img-btn edit-tool" onclick="triggerCardImg(this)">+ صورة</button></div>
+            <div class="p-body">
+              <span class="p-tag" data-edit="1">روب عادي</span>
+              <h4 class="p-title" data-edit="1">روب التخرج الكلاسيكي</h4>
+              <p style="font-size:0.82rem;color:var(--muted);margin-bottom:8px;" data-edit="1">متوفر بستة ألوان ومقاسات من XS إلى XXL.</p>
+              <div class="p-opts">
+                <select onchange="updateCardPrice(this)"><option value="2500">عادي (2,500 دج)</option><option value="3200">خليجي (3,200 دج)</option></select>
+                <select><option>نسائي</option><option>رجالي</option></select>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <b class="price" style="color:var(--accent);" data-edit="1">2500 دج</b>
+                <button class="btn-gold" style="padding:6px 14px; font-size:0.8rem;" onclick="addCart(this)">أضف للسلة</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+            <!-- قسم 3: القبعة المنفردة -->
+      <div class="sec-block" id="sec-cap">
+        <div class="sec-hdr">
+          <h3 data-edit="1">3. قسم القبعة المنفردة</h3>
+          <button class="btn-gold edit-tool" onclick="openProdModal('sec-cap')">+ إضافة موديل</button>
+        </div>
+        
+        <div class="prod-grid">
+          <div class="p-card" data-branch="Forme V">
+            <button class="del-btn edit-tool" onclick="this.closest('.p-card').remove()">×</button>
+            <div class="img-wrap"><span>🎓</span><button class="chg-img-btn edit-tool" onclick="triggerCardImg(this)">+ صورة</button></div>
+            <div class="p-body">
+              <span class="p-tag" data-edit="1">Forme V</span>
+              <h4 class="p-title" data-edit="1">قبعة تخرج مخصصة</h4>
+              <p style="font-size:0.82rem;color:var(--muted);margin-bottom:8px;" data-edit="1">اختر الشكل واللون ومقاس دائرة الرأس بدقة.</p>
+                       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+                <div class="swatches" style="margin-top:0;flex-wrap:wrap;gap:6px;max-width:165px;">
+                  <div class="swatch" style="width:20px;height:20px;background:#111" title="أسود" onclick="selectCapColor(this,'أسود')"></div>
+                  <div class="swatch" style="width:20px;height:20px;background:#7f1d1d" title="بورغندي" onclick="selectCapColor(this,'بورغندي')"></div>
+                  <div class="swatch" style="width:20px;height:20px;background:#1e3a8a" title="كحلي" onclick="selectCapColor(this,'كحلي')"></div>
+                  <div class="swatch" style="width:20px;height:20px;background:#064e3b" title="أخضر ملكي" onclick="selectCapColor(this,'أخضر ملكي')"></div>
+                  <div class="swatch" style="width:20px;height:20px;background:#f5f5f4" title="أبيض" onclick="selectCapColor(this,'أبيض')"></div>
+                  <div class="swatch" style="width:20px;height:20px;background:#d97706" title="ذهبي" onclick="selectCapColor(this,'ذهبي')"></div>
+                  <div class="swatch" style="width:20px;height:20px;background:#db2777" title="وردي" onclick="selectCapColor(this,'وردي')"></div>
+                  <div class="swatch" style="width:20px;height:20px;background:#581c87" title="بنفسجي" onclick="selectCapColor(this,'بنفسجي')"></div>
+                  <div class="swatch" style="width:20px;height:20px;background:#d6d3d1" title="رمادي فاتح" onclick="selectCapColor(this,'رمادي فاتح')"></div>
+                </div>
+                <input type="number" class="cap-size-in" placeholder="محيط الرأس سم (اختياري)" style="width:125px;padding:6px 8px;border-radius:6px;border:1px solid var(--border);font-size:0.75rem;background:var(--bg);color:var(--text);">
+              </div>
+
+              
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <b class="price" style="color:var(--accent);" data-edit="1">1500 دج</b>
+                <button class="btn-gold" style="padding:6px 14px; font-size:0.8rem;" onclick="addCart(this)">أضف للسلة</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- قسم 4: ورد وإكسسوارات -->
+      <div class="sec-block" id="sec-acc">
+        <div class="sec-hdr">
+          <h3 data-edit="1">4. قسم الورد والإكسسوارات</h3>
+          <button class="btn-gold edit-tool" onclick="openProdModal('sec-acc')">+ إضافة موديل</button>
+        </div>
+        <div class="prod-grid">
+          <div class="p-card" data-branch="ورد">
+            <button class="del-btn edit-tool" onclick="this.closest('.p-card').remove()">×</button>
+            <div class="img-wrap"><span>💐</span><button class="chg-img-btn edit-tool" onclick="triggerCardImg(this)">+ صورة</button></div>
+            <div class="p-body">
+              <span class="p-tag" data-edit="1">ورد وإكسسوارات</span>
+              <h4 class="p-title" data-edit="1">باقة ورد التخرج المخصصة</h4>
+              <p style="font-size:0.82rem;color:var(--muted);margin-bottom:8px;" data-edit="1">تنسيق ورد طبيعي أو صناعي فاخر ليوم التخرج.</p>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <b class="price" style="color:var(--accent);" data-edit="1">1500 دج</b>
+                <button class="btn-gold" style="padding:6px 14px; font-size:0.8rem;" onclick="addCart(this)">أضف للسلة</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- استوديو التصميم التفاعلي -->
+      <div id="studio-sec" class="sec-head">
+        <h2 data-edit="1">اسمك مطرّز على الشال، وتراه قبل أن تطلب</h2>
+        <p data-edit="1">اكتب اسمك أو دفعتك بخط الثلث، واختر لون الشال والتطريز مجاناً.</p>
+      </div>
+      <div class="studio-box">
+        <div class="preview-area" id="studio-preview">
+          <div class="stole-shape" id="stole-box">
+            <div class="stole-txt" id="stole-r">دفعة 2026</div>
+            <div class="stole-txt" id="stole-l">الاسم واللقب</div>
+          </div>
+          <span style="font-size:0.78rem;color:var(--muted);margin-top:12px;">معاينة حية لشكل التطريز</span>
+        </div>
+        <div class="ctrl-group">
+          <label>نوع الشال والقماش</label>
+          <select id="s-type">
+            <option value="3800">شال ميس - كريب (3,800 دج)</option>
+            <option value="4300">شال ميس - دان (4,300 دج)</option>
+            <option value="4500">شال بالظهر - كريب (4,500 دج)</option>
+          </select>
+          <label>الجهة اليمنى (الاسم أو التخصص)</label>
+          <input type="text" id="in-r" value="دفعة 2026" oninput="document.getElementById('stole-r').innerText=this.value">
+          <label>الجهة اليسرى (اسمك أو الجامعة)</label>
+          <input type="text" id="in-l" value="الاسم واللقب" oninput="document.getElementById('stole-l').innerText=this.value">
+          <label>لون الشال</label>
+          <div class="swatches">
+            <div class="swatch" style="background:#111" onclick="setStoleColor('#111','#f59e0b')"></div>
+            <div class="swatch" style="background:#7f1d1d" onclick="setStoleColor('#7f1d1d','#f59e0b')"></div>
+            <div class="swatch" style="background:#1e3a8a" onclick="setStoleColor('#1e3a8a','#ffffff')"></div>
+            <div class="swatch" style="background:#064e3b" onclick="setStoleColor('#064e3b','#f59e0b')"></div>
+            <div class="swatch" style="background:#333" onclick="setStoleColor('#333','#ffffff')"></div>
+          </div>
+          <button type="button" class="btn-gold" style="width:100%;margin-top:14px;padding:11px;" onclick="addCustomStole()">+ أضف هذا الشال المصمم للسلة</button>
+        </div>
+      </div>
+
+      <div id="prices-sec" class="sec-head">
+        <h2 data-edit="1">الأسعار الرسمية</h2>
+        <p data-edit="1">كل الشالات متوفرة بقماشين: الكريب والدان، والسعر يشمل القبعة الأساسية.</p>
+      </div>
+      <div class="tbl-box">
+        <table>
+          <thead><tr><th>الشال مع القبعة</th><th>كريب</th><th>دان</th></tr></thead>
+          <tbody>
+            <tr><td>شال ميس</td><td data-edit="1"><b>3,800 دج</b></td><td data-edit="1"><b>4,300 دج</b></td></tr>
+            <tr><td>شال عادي بدون ظهر</td><td data-edit="1"><b>3,900 دج</b></td><td data-edit="1"><b>4,400 دج</b></td></tr>
+            <tr><td>شال بالظهر</td><td data-edit="1"><b>4,500 دج</b></td><td data-edit="1"><b>4,900 دج</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="faq-sec" class="sec-head"><h2>الأسئلة الشائعة</h2></div>
+      <details><summary data-edit="1">كم سعر شال التخرج مع القبعة؟</summary><p data-edit="1">يبدأ من 3,800 دج (شال ميس كريب) ويصل إلى 4,900 دج. روب التخرج العادي بـ 2,500 دج، والتطريز مجاني.</p></details>
+      <details><summary data-edit="1">هل أدفع عند إرسال الطلب؟</summary><p data-edit="1">لا. ترسل الطلب دون أي دفع، ونتواصل معك عبر WhatsApp لمراجعة التفاصيل، ثم يُؤكَّد الطلب بعد دفع عربون 30% والباقي عند التسليم.</p></details>
+      <details><summary data-edit="1">هل التوصيل متاح إلى كل الولايات؟</summary><p data-edit="1">التوصيل متاح داخل الجزائر، إلى المنزل أو بالاستلام من المكتب، وتختار ولايتك وبلديتك عند الطلب، ومدة التجهيز 7 أيام على الأقل.</p></details>
+    </main>
+  </div>
+
+  <footer>
+    <strong style="font-size:1.1rem; color:var(--text);">DG BY DOUAA</strong>
+    <p style="margin-top:6px;">متجر جزائري لأزياء التخرج: شالات وقبعات تصمّمها باسمك وشعارك، وروبات بمقاسك، مع التوصيل داخل الجزائر.</p>
+    <p style="margin-top:8px;">© 2026 DG by douaa الجزائر <span style="cursor:pointer;margin-right:8px;" onclick="unlockAdmin()" title="دخول الإدارة">🔒</span></p>
+  </footer>
+
+  <!-- نافذة إضافة موديل -->
+  <div class="modal" id="prod-modal">
+    <div class="m-box">
+      <h3 style="margin-bottom:8px; color:var(--accent);">+ إضافة موديل جديد</h3>
+      <input type="file" id="p-img" accept="image/*">
+      <input type="text" id="p-branch" placeholder="اسم الفرع (مثال: شال ميس)">
+      <input type="text" id="p-name" placeholder="اسم المنتج">
+      <input type="text" id="p-desc" placeholder="وصف قصير">
+      <input type="number" id="p-price" placeholder="السعر الأساسي بالدينار الجزائري">
+      <textarea id="p-options" rows="3" placeholder="خيارات إضافية (كل خيار في سطر بهذا الشكل: كريب|3800)
+دان|4300"></textarea>
+      <div class="m-btns">
+        <button onclick="saveProd()" class="btn-gold">إضافة</button>
+        <button onclick="closeAll()" class="btn-dark">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة السلة -->
+  <div class="modal" id="cart-modal">
+    <div class="m-box">
+      <h3 style="margin-bottom:8px; color:var(--accent);">🛍 سلة المشتريات</h3>
+      <div id="c-list" style="margin-bottom:8px;font-size:0.88rem;"></div>
+      <div style="font-weight:800;margin-bottom:8px;">المجموع: <span id="c-tot" style="color:var(--accent);">0 دج</span></div>
+      <input type="text" id="u-name" placeholder="الاسم الكامل">
+      <input type="text" id="u-wilaya" placeholder="الولاية والبلدية (توصيل منزل أو مكتب)">
+      <input type="date" id="u-date" title="موعد التسليم المطلوب">
+      <textarea id="u-note" rows="2" placeholder="تفاصيل المقاس (XS-XXL)، اللون، أو ملاحظات التطريز"></textarea>
+      <div class="m-btns">
+        <button onclick="sendWA()" class="btn-green">إرسال الطلب عبر WhatsApp</button>
+        <button onclick="closeAll()" class="btn-dark">إغلاق</button>
+      </div>
+    </div>
+  </div>
+<div class="modal" id="login-modal">
+  <div class="m-box">
+    <h3 style="margin-bottom:10px; color:var(--accent);">🔐 دخول الإدارة</h3>
+
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:10px;">دخول خاص بصاحبة المتجر فقط</p>
+    <input type="email" id="adm-email" autocomplete="username" placeholder="البريد الإلكتروني للإدارة">
+    <input type="password" id="adm-pass" autocomplete="current-password" placeholder="كلمة المرور">
+    <div class="m-btns">
+      <button onclick="loginAdmin()" class="btn-gold">دخول</button>
+      <button onclick="closeAll()" class="btn-dark">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+  <script>
+    
+    let curSec = "", activeCard = null, cart = [], stoleColorName = "أسود";
+    const MY_WHATSAPP = "213673423172"; // نفس رقم زر واتساب الظاهر بالموقع حالياً
+
+    
+      const SB_URL = "https://rcvtbmymewzrfrlabsbv.supabase.co";
+// هذا مفتاح Supabase publishable فقط، وليس service_role. يجب تفعيل RLS كما في ملف SQL المرفق.
+const SB_KEY = "sb_publishable_LkDqEApbom-4E66DdiZQag_VYA2gyWr";
+let sb = null;
+let isAdminAuthenticated = false;
+
+async function initStore() {
+  try {
+    if (!window.supabase || !window.supabase.createClient) throw new Error("تعذر تحميل مكتبة الاتصال. تحققي من الإنترنت ثم أعيدي المحاولة.");
+    sb = window.supabase.createClient(SB_URL, SB_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+    const [{ data: store, error: storeError }, { data: authData, error: authError }] = await Promise.all([
+      sb.from("store_data").select("html_content,logo_url").eq("id", 1).maybeSingle(),
+      sb.auth.getSession()
+    ]);
+    if (storeError) console.warn("تعذر تحميل بيانات المتجر:", storeError.message);
+    if (store && store.html_content) document.getElementById("editable-main").innerHTML = store.html_content;
+    if (store && store.logo_url) {
+      const logo = document.getElementById("site-logo");
+      logo.src = store.logo_url; logo.style.display = "block";
+    }
+    if (authError) console.warn("تعذر التحقق من جلسة الإدارة:", authError.message);
+    isAdminAuthenticated = !!(authData && authData.session);
+    if (isAdminAuthenticated) enableAdminUI();
+    sb.auth.onAuthStateChange((_event, session) => {
+      isAdminAuthenticated = !!session;
+      if (isAdminAuthenticated) enableAdminUI();
+      else disableAdminUI();
+    });
+  } catch (e) {
+    console.error("تعذر تهيئة المتجر:", e);
+    alert(e.message || "تعذر الاتصال بقاعدة البيانات.");
+  }
+}
+window.addEventListener("DOMContentLoaded", initStore);
+
+function enableAdminUI() {
+  if (!isAdminAuthenticated && sb) return;
+  document.body.classList.add("admin-mode");
+  document.querySelectorAll('#editable-main [data-edit="1"]').forEach(el => {
+    if (!el.querySelector("button, select, input, textarea")) el.setAttribute("contenteditable", "true");
+  });
+}
+function disableAdminUI() {
+  document.body.classList.remove("admin-mode");
+  document.querySelectorAll("[contenteditable]").forEach(el => el.removeAttribute("contenteditable"));
+}
+
+async function unlockAdmin() {
+  if (isAdminAuthenticated) {
+    if (document.body.classList.contains("admin-mode")) disableAdminUI();
+    else enableAdminUI();
+    return;
+  }
+  document.getElementById("login-modal").style.display = "flex";
+}
+
+async function loginAdmin() {
+  try {
+    if (!sb) return alert("المتجر ما زال يتصل بالخادم. أعيدي المحاولة بعد لحظات.");
+    const email = document.getElementById("adm-email").value.trim();
+    const password = document.getElementById("adm-pass").value;
+    if (!email || !password) return alert("أدخلي البريد الإلكتروني وكلمة المرور.");
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    isAdminAuthenticated = !!(data && data.session);
+    if (!isAdminAuthenticated) throw new Error("لم يتم إنشاء جلسة دخول.");
+    closeAll(); enableAdminUI();
+    document.getElementById("adm-pass").value = "";
+    alert("تم تسجيل الدخول إلى لوحة الإدارة.");
+  } catch (e) { alert("تعذر تسجيل الدخول: " + (e.message || "خطأ غير معروف")); }
+}
+
+async function publishToCloud() {
+  const btn = document.getElementById("admin-save-btn") || document.getElementById("save-cloud-btn");
+  if (!sb) return alert("الاتصال بقاعدة البيانات غير جاهز. أعيدي تحميل الصفحة.");
+  const { data: sessionData, error: sessionError } = await sb.auth.getSession();
+  if (sessionError || !sessionData || !sessionData.session) {
+    isAdminAuthenticated = false; disableAdminUI();
+    return alert("انتهت جلسة الإدارة. سجّلي الدخول من جديد قبل الحفظ.");
+  }
+  const oldText = btn ? btn.innerText : "";
+  if (btn) { btn.disabled = true; btn.innerText = "جاري الحفظ..."; }
+  try {
+    const main = document.getElementById("editable-main");
+    const editable = [...main.querySelectorAll("[contenteditable]")];
+    editable.forEach(el => el.removeAttribute("contenteditable"));
+    const html_content = main.innerHTML;
+    const logo = document.getElementById("site-logo");
+    const logo_url = logo && logo.style.display !== "none" ? logo.src : "";
+    const { error } = await sb.from("store_data").upsert({ id: 1, html_content, logo_url, updated_at: new Date().toISOString() }, { onConflict: "id" });
+    if (error) throw error;
+    alert("تم حفظ التعديلات بنجاح. افتحي رابط الموقع في نافذة جديدة للتأكد من ظهورها للزبائن.");
+  } catch (e) {
+    alert("لم يتم الحفظ: " + (e.message || "خطأ غير معروف") + "\nتحققي من إعداد RLS ومعرّف حساب الإدارة في Supabase.");
+  } finally {
+    if (isAdminAuthenticated) enableAdminUI();
+    if (btn) { btn.disabled = false; btn.innerText = oldText || "☁ حفظ ونشر التعديلات"; }
+  }
+}
+async function adminLogout() {
+  try { if (sb) { const { error } = await sb.auth.signOut(); if (error) throw error; } }
+  catch (e) { alert("تعذر تسجيل الخروج: " + e.message); return; }
+  isAdminAuthenticated = false; disableAdminUI();
+  alert("تم تسجيل الخروج من الإدارة.");
+}
+
+function selectCapColor(el, colorName) {
+  el.parentElement.querySelectorAll(".swatch").forEach(s => s.style.outline = "none");
+  el.style.outline = "2.5px solid var(--accent)";
+  el.closest(".p-card").dataset.capColor = colorName;
+}
+
+
+    function setStoleColor(bg, txt) {
+      const box = document.getElementById("stole-box");
+      if (box) { box.style.background = bg; box.style.color = txt; }
+      const names = { "#111": "أسود", "#7f1d1d": "بورغندي", "#1e3a8a": "كحلي", "#064e3b": "أخضر ملكي", "#333": "رمادي غامق" };
+      stoleColorName = names[bg] || bg;
+    }
+
+    function addCustomStole() {
+      const sel = document.getElementById("s-type");
+      const label = sel.options[sel.selectedIndex].text;
+      const price = parseInt(sel.value) || 3800;
+      const rTxt = document.getElementById("in-r").value || "";
+      const lTxt = document.getElementById("in-l").value || "";
+      cart.push({ title: `${label} | لون: ${stoleColorName} | تطريز: (${rTxt} / ${lTxt})`, price });
+      document.getElementById("c-cnt").innerText = cart.length;
+      alert("تمت إضافة الشال المصمم للسلة 🛍");
+    }
+
+    async function uploadStoreImage(file, maxWidth) {
+      if (!file || !file.type || !file.type.startsWith("image/")) throw new Error("اختاري ملف صورة صالحاً.");
+      if (file.size > 12 * 1024 * 1024) throw new Error("حجم الصورة كبير. اختاري صورة أقل من 12 ميغابايت.");
+      if (!sb) throw new Error("الاتصال بقاعدة البيانات غير جاهز.");
+      const { data: sessionData } = await sb.auth.getSession();
+      if (!sessionData || !sessionData.session) throw new Error("سجّلي الدخول إلى لوحة الإدارة أولاً.");
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("تعذر قراءة الصورة."));
+        reader.onload = ev => resolve(ev.target.result);
+        reader.readAsDataURL(file);
+      });
+      const image = await new Promise((resolve, reject) => {
+        const img = new Image(); img.onload = () => resolve(img); img.onerror = () => reject(new Error("صيغة الصورة غير مدعومة.")); img.src = dataUrl;
+      });
+      const ratio = Math.min(1, maxWidth / image.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.width * ratio));
+      canvas.height = Math.max(1, Math.round(image.height * ratio));
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("تعذر تجهيز الصورة على هذا الجهاز.");
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error("تعذر ضغط الصورة.")), "image/jpeg", 0.78));
+      const safeName = Date.now() + "-" + Math.random().toString(36).slice(2, 9) + ".jpg";
+      const path = "store/" + safeName;
+      const { error } = await sb.storage.from("store-images").upload(path, blob, { contentType: "image/jpeg", upsert: false });
+      if (error) throw error;
+      const { data } = sb.storage.from("store-images").getPublicUrl(path);
+      if (!data || !data.publicUrl) throw new Error("تم رفع الصورة لكن تعذر إنشاء رابطها.");
+      return data.publicUrl;
+    }
+
+    async function setLogo(e) {
+      const f = e.target.files && e.target.files[0]; if (!f) return;
+      try {
+        const url = await uploadStoreImage(f, 500);
+        const logo = document.getElementById("site-logo");
+        logo.src = url; logo.style.display = "block";
+      } catch (err) { alert("تعذر رفع الشعار: " + err.message); }
+      finally { e.target.value = ""; }
+    }
+
+    async function setStudioImg(e) {
+      const f = e.target.files && e.target.files[0]; if (!f) return;
+      try {
+        const url = await uploadStoreImage(f, 1200);
+        const target = document.getElementById("studio-preview");
+        if (target) { target.style.backgroundImage = `linear-gradient(rgba(255,255,255,.15),rgba(255,255,255,.15)),url("${url}")`; target.style.backgroundSize = "cover"; target.style.backgroundPosition = "center"; }
+      } catch (err) { alert("تعذر رفع صورة المعاينة: " + err.message); }
+      finally { e.target.value = ""; }
+    }
+
+    function triggerCardImg(btn) {
+      activeCard = btn.closest(".p-card");
+      const inp = document.getElementById("card-img-in");
+      inp.value = ""; inp.click();
+    }
+
+    async function applyCardImg(e) {
+      const f = e.target.files && e.target.files[0]; if (!f || !activeCard) return;
+      try {
+        const url = await uploadStoreImage(f, 900);
+        const wrap = activeCard.querySelector(".img-wrap");
+        wrap.innerHTML = `<img src="${url}" class="p-img" alt="صورة المنتج"><button class="chg-img-btn edit-tool" onclick="triggerCardImg(this)">+ صورة</button>`;
+      } catch (err) { alert("تعذر رفع صورة المنتج: " + err.message); }
+      finally { e.target.value = ""; activeCard = null; }
+    }
+
+    function filterBranch(btn, secId, branch) {
+      btn.parentElement.querySelectorAll(".tab-pill").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.querySelectorAll("#" + secId + " .p-card").forEach(c => {
+        c.style.display = (branch === "all" || c.dataset.branch === branch) ? "flex" : "none";
+      });
+    }
+
+    function updateCardPrice(sel) {
+      const card = sel.closest(".p-card");
+      const price = card && card.querySelector(".price");
+      if (price) price.innerText = (Number(sel.value) || 0).toLocaleString("en-US") + " دج";
+    }
+
+    function openProdModal(id) { curSec = id; document.getElementById("prod-modal").style.display = "flex"; }
+
+    function escapeHTML(value) {
+      return String(value).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+    }
+
+    async function saveProd() {
+      const br = document.getElementById("p-branch").value.trim() || "عام";
+      const nm = document.getElementById("p-name").value.trim() || "منتج جديد";
+      const ds = document.getElementById("p-desc").value.trim() || "تفاصيل المنتج حسب الطلب";
+      const pr = Math.max(0, Number(document.getElementById("p-price").value) || 0);
+      const optionsRaw = document.getElementById("p-options").value.trim();
+      const options = optionsRaw.split("\n").map(line => line.split("|")).filter(parts => parts.length >= 2 && parts[0].trim() && Number.isFinite(Number(parts[1].trim()))).map(parts => ({label:parts[0].trim(),price:Math.max(0,Number(parts[1].trim()))}));
+      const file = document.getElementById("p-img").files[0];
+      const addButton = document.querySelector('#prod-modal button[onclick="saveProd()"]');
+      if (addButton) { addButton.disabled = true; addButton.textContent = "جاري الإضافة..."; }
+      try {
+        let imageHTML = '<span>🎓</span>';
+        if (file) {
+          const url = await uploadStoreImage(file, 900);
+          imageHTML = `<img src="${url}" class="p-img" alt="${escapeHTML(nm)}">`;
+        }
+        const g = document.querySelector("#" + curSec + " .prod-grid");
+        if (!g) throw new Error("لم يتم العثور على قسم المنتجات.");
+        const d = document.createElement("div"); d.className = "p-card"; d.dataset.branch = br;
+        const optionHTML = options.length ? `<div class="p-opts"><select onchange="updateCardPrice(this)">${options.map(o=>`<option value="${o.price}">${escapeHTML(o.label)} (${o.price.toLocaleString("en-US")} دج)</option>`).join("")}</select></div>` : "";
+        d.innerHTML = `<button class="del-btn edit-tool" onclick="this.closest('.p-card').remove()">×</button><div class="img-wrap">${imageHTML}<button class="chg-img-btn edit-tool" onclick="triggerCardImg(this)">+ صورة</button></div><div class="p-body"><span class="p-tag" data-edit="1">${escapeHTML(br)}</span><h4 class="p-title" data-edit="1">${escapeHTML(nm)}</h4><p style="font-size:.82rem;color:var(--muted);margin-bottom:8px;" data-edit="1">${escapeHTML(ds)}</p>${optionHTML}<div style="display:flex;justify-content:space-between;align-items:center;"><b class="price" style="color:var(--accent);" data-edit="1">${(options.length ? options[0].price : pr).toLocaleString("en-US")} دج</b><button class="btn-gold" style="padding:6px 14px;font-size:.8rem;" onclick="addCart(this)">أضف للسلة</button></div></div>`;
+        g.appendChild(d); enableAdminUI(); closeAll();
+        ["p-branch","p-name","p-desc","p-price","p-options"].forEach(id=>document.getElementById(id).value="");
+        document.getElementById("p-img").value="";
+      } catch (err) { alert("تعذرت إضافة المنتج: " + err.message); }
+      finally { if (addButton) { addButton.disabled = false; addButton.textContent = "إضافة"; } }
+    }
+
+    function addCart(btn) {
+      const c = btn.closest(".p-card");
+      const t = c.querySelector(".p-title").innerText;
+      const opts = Array.from(c.querySelectorAll("select")).map(function(s) { return s.options[s.selectedIndex].text; }).join(" - ");
+      const p = parseInt(c.querySelector(".price").innerText.replace(/[^\d]/g, "")) || 0;
+const capCol = c.dataset.capColor ? " | لون: " + c.dataset.capColor : "";
+const sizeIn = c.querySelector(".cap-size-in");
+
+const capSize = (sizeIn && sizeIn.value.trim()) ? " | مقاس الرأس: " + sizeIn.value.trim() + " سم" : "";
+cart.push({ title: (opts ? t + " (" + opts + ")" : t) + capCol + capSize, price: p });
+
+
+      document.getElementById("c-cnt").innerText = cart.length;
+      alert("تمت الإضافة للسلة 🛍");
+    }
+
+    function openCart() {
+      const l = document.getElementById("c-list"); l.innerHTML = ""; let tot = 0;
+      cart.forEach(function(it, i) {
+        tot += Number(it.price) || 0;
+        const row = document.createElement("div");
+        row.style.cssText = "display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);";
+        const label = document.createElement("span");
+        label.textContent = it.title + " (" + Number(it.price || 0).toLocaleString("en-US") + " دج)";
+        const remove = document.createElement("button");
+        remove.type = "button"; remove.textContent = "حذف";
+        remove.style.cssText = "color:#b42318;background:transparent;border:0;cursor:pointer;font-weight:800;";
+        remove.addEventListener("click", function() { cart.splice(i, 1); document.getElementById("c-cnt").innerText = cart.length; openCart(); });
+        row.append(label, remove); l.appendChild(row);
+      });
+      if (!cart.length) l.innerHTML = "السلة فارغة حالياً";
+      document.getElementById("c-tot").innerText = tot + " دج";
+      document.getElementById("cart-modal").style.display = "flex";
+    }
+
+    function closeAll() { document.querySelectorAll(".modal").forEach(function(m) { m.style.display = "none"; }); }
+
+    function sendWA() {
+      if (!cart.length) return alert("السلة فارغة!");
+      const nameInput = document.getElementById("u-name");
+      const nm = nameInput.value.trim();
+      if (!nm) { alert("من فضلك أدخلي الاسم الكامل."); nameInput.focus(); return; }
+      const wl = document.getElementById("u-wilaya").value || "غير محدد";
+      const dt = document.getElementById("u-date").value || "أقرب موعد";
+      const nt = document.getElementById("u-note").value || "";
+      let tot = 0, txt = "";
+      cart.forEach(function(it, i) { tot += it.price; txt += (i+1) + ". " + it.title + " (" + it.price + " دج)\n"; });
+      
+      const msg = `*طلب جديد عبر الموقع 🎓*%0A` +
+                  `👤 *الاسم:* ${nm}%0A` +
+                  `📍 *الولاية:* ${wl}%0A` +
+                  `📅 *موعد التسليم:* ${dt}%0A` +
+                  `🛒 *الطلبات:*%0A${txt}` +
+                  `💰 *المجموع التقديري:* ${tot} دج%0A` +
+                  `📝 *ملاحظات:* ${nt}`;
+                  
+      const waUrl = `https://wa.me/${MY_WHATSAPP}?text=${encodeURIComponent(msg.replaceAll("%0A", "\n"))}`;
+      const opened = window.open(waUrl, "_blank", "noopener,noreferrer");
+      if (!opened) alert("المتصفح منع فتح واتساب. اسمحي بالنوافذ المنبثقة أو انسخي الطلب وحاولي مجدداً.");
+    }
+  </script>
+</body>
+</html>

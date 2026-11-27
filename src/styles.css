@@ -74,13 +74,13 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --background: oklch(0.98 0.005 75);
+  --foreground: oklch(0.2 0.01 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
+  --primary: oklch(0.35 0.11 0);
   --primary-foreground: oklch(0.984 0.003 247.858);
   --secondary: oklch(0.968 0.007 247.896);
   --secondary-foreground: oklch(0.208 0.042 265.755);
@@ -154,3 +154,372 @@
     color: var(--color-foreground);
   }
 }
+
+@layer base {
+  :root {
+    --bg-canvas: #FAF8F5;
+    --bg-surface: #FFFFFF;
+    --bg-subtle: #F4EFE6;
+    --text-primary: #1A1617;
+    --text-muted: #65525A;
+    --border-hairline: rgba(198, 163, 85, 0.35);
+    --accent-burgundy: #5E1734;
+    --accent-burgundy-hover: #460F28;
+    --accent-gold: #C6A355;
+    --accent-soft-ivory: #F4EFE6;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    color-scheme: light;
+  }
+
+  body {
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background-color: #5E1734;
+    color: #FFFFFF;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid #5E1734;
+    outline-offset: 2px;
+  }
+
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #catalog-sec,
+  #studio-sec,
+  #prices-sec,
+  #faq-sec,
+  #showcase-sec,
+  #testimonials-sec {
+    scroll-margin-top: 84px;
+  }
+}
+
+.font-editorial {
+  font-family: 'Amiri', serif;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.protected-media,
+.protected-media img {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.section-reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.22s ease-out,
+    transform 0.22s ease-out;
+}
+.section-reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.luxury-card-lift {
+  transition:
+    transform 0.15s ease-out,
+    box-shadow 0.15s ease-out,
+    border-color 0.15s ease-out;
+}
+.luxury-card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -8px rgba(92, 22, 53, 0.14), 0 4px 10px -4px rgba(198, 163, 85, 0.16);
+}
+
+.cta-luxury-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.cta-luxury-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 18%,
+    rgba(198, 163, 85, 0.32) 42%,
+    rgba(255, 250, 240, 0.42) 50%,
+    rgba(198, 163, 85, 0.28) 58%,
+    transparent 82%
+  );
+  transform: translateX(130%);
+  transition: transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+.cta-luxury-shimmer:hover::after,
+.cta-luxury-shimmer:focus-visible::after {
+  transform: translateX(-130%);
+}
+
+@keyframes whatsappPulseRing {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  75%,
+  100% {
+    transform: scale(1.48);
+    opacity: 0;
+  }
+}
+
+.whatsapp-pulse-ring {
+  animation: whatsappPulseRing 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .luxury-card-lift:hover {
+    transform: none;
+  }
+  .cta-luxury-shimmer::after {
+    display: none;
+  }
+  .whatsapp-pulse-ring {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}
+
+@keyframes catalogQuickReveal {
+  from {
+    opacity: 0.78;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.catalog-enter {
+  animation: catalogQuickReveal 150ms ease-out forwards;
+}
+
+/* ============ Toolbar العائم ============ */
+.admin-floating-toolbar {
+  display: none;
+  position: fixed;
+  gap: 4px;
+  padding: 4px;
+  background: #FFFFFF;
+  border: 1px solid rgba(198, 163, 85, 0.45);
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(36, 19, 27, 0.14);
+  z-index: 9999;
+  align-items: center;
+}
+.admin-floating-toolbar button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  background: #FAF8F5;
+  color: #1A1617;
+  transition: background 0.15s, transform 0.15s;
+}
+.admin-floating-toolbar button:hover {
+  background: rgba(198, 163, 85, 0.22);
+  transform: scale(1.08);
+}
+.admin-floating-toolbar button[data-action="delete"]:hover {
+  background: #FFE4E6;
+}
+
+[data-admin-text="true"] {
+  transition: background 0.15s ease;
+}
+[data-admin-text="true"]:hover {
+  background: rgba(92, 22, 53, 0.08);
+}
+[contenteditable="true"]:focus {
+  outline: 2px solid #5E1734 !important;
+  background: rgba(250, 248, 245, 0.9) !important;
+  box-shadow: 0 0 0 4px rgba(198, 163, 85, 0.24);
+  border-radius: 4px;
+}
+
+.admin-inserted-img {
+  display: block;
+  max-width: 100%;
+  margin: 10px 0;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(36, 19, 27, 0.14);
+}
+/* =========================================
+   View Transitions API — SPA transitions
+   ========================================= */
+
+::view-transition-old(root) {
+  animation: vt-fade-out 0.32s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+::view-transition-new(root) {
+  animation: vt-fade-in 0.32s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes vt-fade-out {
+  to { opacity: 0; transform: scale(0.985); }
+}
+@keyframes vt-fade-in {
+  from { opacity: 0; transform: scale(1.015); }
+}
+
+::view-transition-old(product-hero),
+::view-transition-new(product-hero) {
+  animation-duration: 0.45s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  object-fit: cover;
+  overflow: hidden;
+}
+
+header {
+  view-transition-name: site-header;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-old(product-hero),
+  ::view-transition-new(product-hero) {
+    animation: none !important;
+  }
+}
+/* 1. تأثير المودال تاع الحذف (Modal) */
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-in.zoom-in-95 {
+  animation: zoomIn 0.15s ease-out forwards;
+}
+
+/* 2. تأثير الإشعار (Toast) */
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.animate-in.slide-in-from-bottom-5 {
+  animation: slideInFromBottom 0.2s ease-out forwards;
+}
+
+@keyframes cartAttentionShake {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  15% {
+    transform: translateY(-4px) rotate(-10deg) scale(1.14);
+  }
+  30% {
+    transform: translateY(-2px) rotate(10deg) scale(1.14);
+  }
+  45% {
+    transform: translateY(-4px) rotate(-8deg) scale(1.12);
+  }
+  60% {
+    transform: translateY(-1px) rotate(6deg) scale(1.08);
+  }
+  75% {
+    transform: translateY(-2px) rotate(-3deg) scale(1.04);
+  }
+}
+
+.cart-attention-shake {
+  animation: cartAttentionShake 0.75s ease-in-out 2;
+}
+
+@keyframes cartConfirmPop {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.cart-confirm-pop {
+  animation: cartConfirmPop 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media print {
+  body.printing-workshop-slip * {
+    visibility: hidden !important;
+  }
+  body.printing-workshop-slip #workshop-print-slip,
+  body.printing-workshop-slip #workshop-print-slip * {
+    visibility: visible !important;
+  }
+  body.printing-workshop-slip #workshop-print-slip {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    background: #FFFFFF !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+  body.printing-workshop-slip .no-print {
+    display: none !important;
+  }
+}
+
+/* Luxury upgrade: cinematic Ken Burns for hero slides */
+@keyframes kenBurns { from { transform: scale(1); } to { transform: scale(1.05); } }
+.ken-burns { animation: kenBurns 9s ease-out forwards; filter: contrast(1.03) saturate(1.05); }
+@media (prefers-reduced-motion: reduce) { .ken-burns { animation: none; } }

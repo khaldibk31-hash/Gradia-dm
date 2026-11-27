@@ -28,3 +28,9 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Store migration
+- Keep TanStack Start as the application shell and mount the imported browser-dependent store behind a lazy ClientOnly boundary to prevent browser APIs from executing during SSR.
+- Preserve source database contracts until an exact schema and policy export is supplied; do not invent replacements for production columns or access rules.
+- Retain imported React modules as JavaScript compatibility modules while new functionality remains strictly typed; this avoids changing legacy behavior solely to satisfy unrelated source/target compiler differences.
+- Store optional tracking configuration inside the existing custom-text settings payload to avoid changing the source table schema; load Meta only after explicit visitor consent.
