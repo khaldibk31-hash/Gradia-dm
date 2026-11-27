@@ -33,19 +33,17 @@ export function SplashCanvas({ animate = true, exiting = false }: SplashCanvasPr
         />
       </div>
 
-      {/* Centered Crest & Editorial Typography */}
-      <div className="relative z-10 flex flex-col items-center text-center select-none">
-        {/* Logo Wrapper with mix-blend-multiply & Diagonal Champagne-Gold Shimmer */}
-        <div
-          className={`relative flex items-center justify-center ${
-            animate ? "splash-logo-reveal" : "scale-100"
-          }`}
-        >
+      {/* Centered Crest & Editorial Typography (no z-index stacking context so mix-blend-multiply blends directly onto #FAF8F5) */}
+      <div className="relative flex flex-col items-center text-center select-none">
+        {/* Logo Wrapper without transform/opacity isolation */}
+        <div className="relative flex items-center justify-center">
           <img
             src={BRAND_CREST_SRC}
             alt="DG by douaa — DM GRADUATION"
             draggable={false}
-            className="w-32 sm:w-40 h-auto object-contain mix-blend-multiply select-none pointer-events-none"
+            className={`w-44 sm:w-52 h-auto object-contain mix-blend-multiply brightness-105 contrast-110 select-none pointer-events-none ${
+              animate ? "splash-logo-reveal" : "scale-100"
+            }`}
           />
 
           {animate && (
@@ -106,11 +104,11 @@ export function CinematicSplash() {
   useEffect(() => {
     const exitTimer = window.setTimeout(() => {
       setExiting(true);
-    }, 1400);
+    }, 2200);
 
     const unmountTimer = window.setTimeout(() => {
       setDismissed(true);
-    }, 1950);
+    }, 2750);
 
     return () => {
       window.clearTimeout(exitTimer);
