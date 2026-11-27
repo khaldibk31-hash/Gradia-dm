@@ -1,5 +1,7 @@
 # Pixel Perfect Picture Maker
 
+<!-- build-note: 2026-11-27 — small README update so GitHub receives a fresh commit and Vercel redeploys. -->
+
 Implement exactly the screenshot and nothing else
 
 This project was built with [Lovable](https://lovable.dev).
