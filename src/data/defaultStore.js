@@ -43,6 +43,7 @@ const HERO_BLACK_GOLD_IMAGE_PATH = "/src/assets/images/hero_luxury_black_gold_gr
 const SHAWL_MISS_IMAGE_PATH = "/src/assets/images/stole_miss_ivory_1795608463033.jpg";
 const SHAWL_REGULAR_IMAGE_PATH = "/src/assets/images/stole_regular_ivory_1795608463680.jpg";
 const SHAWL_BACK_IMAGE_PATH = "/src/assets/images/stole_back_ivory_1795608465248.jpg";
+const SHAWL_CRYSTAL_ROYAL_IMAGE_PATH = "/assets/aistudio/85f05e65-0c65-4ea0-9f61-27a1476a0e67_b3e9eb90.png";
 const SHAWL_AMERICAN_IMAGE_PATH = "/src/assets/images/stole_american_ivory_1795608465114.jpg";
 const SHAWL_IMAGE_PATH = SHAWL_MISS_IMAGE_PATH;
 const ROBE_IMAGE_PATH = "/src/assets/images/product_graduation_robe_1794839418964.jpg";
@@ -60,18 +61,20 @@ const CATEGORY_LABELS = {
   accessories: "\u0627\u0644\u0648\u0631\u062F \u0648\u0627\u0644\u0625\u0643\u0633\u0633\u0648\u0627\u0631\u0627\u062A"
 };
 const CATEGORY_BRANCHES = {
-  shawl: ["\u0627\u0644\u0643\u0644", "\u0634\u0627\u0644 \u0645\u064A\u0633", "\u0634\u0627\u0644 \u0639\u0627\u062F\u064A", "\u0634\u0627\u0644 \u0628\u0627\u0644\u0638\u0647\u0631", "\u0627\u0644\u0634\u0627\u0644 \u0627\u0644\u0627\u0645\u0631\u064A\u0643\u064A", "\u0645\u0648\u062F\u064A\u0644 \u062E\u0627\u0635"],
+  shawl: ["\u0627\u0644\u0643\u0644", "\u0634\u0627\u0644 \u0645\u064A\u0633", "\u0634\u0627\u0644 \u0639\u0627\u062F\u064A", "\u0634\u0627\u0644 \u0628\u0627\u0644\u0638\u0647\u0631", "\u0634\u0627\u0644 \u0645\u0644\u0643\u064A \u0645\u0631\u0635\u0639 \u0628\u0627\u0644\u0643\u0631\u064A\u0633\u062A\u0627\u0644", "\u0627\u0644\u0634\u0627\u0644 \u0627\u0644\u0627\u0645\u0631\u064A\u0643\u064A", "\u0645\u0648\u062F\u064A\u0644 \u062E\u0627\u0635"],
   robe: ["\u0627\u0644\u0643\u0644", "\u0631\u0648\u0628 \u0639\u0627\u062F\u064A", "\u0631\u0648\u0628 \u062E\u0644\u064A\u062C\u064A"],
   cap: ["\u0627\u0644\u0643\u0644", "Forme V", "\u0643\u0644\u0627\u0633\u064A\u0643\u064A"],
   accessories: ["\u0627\u0644\u0643\u0644", "\u0648\u0631\u062F"]
 };
-const ROYAL_FIVE_STOLE_COLORS = [
-  { name: "\u0623\u0633\u0648\u062F \u0645\u0644\u0643\u064A", hex: "#141414", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A" },
-  { name: "\u0639\u0646\u0627\u0628\u064A \u0645\u0644\u0643\u064A", hex: "#5E1734", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A" },
-  { name: "\u0643\u062D\u0644\u064A \u062F\u0627\u0643\u0646", hex: "#132238", extraPrice: 0, defaultThreadHex: "#f5f2eb", defaultThreadName: "\u0623\u0628\u064A\u0636 \u0644\u0624\u0644\u0624\u064A" },
-  { name: "\u0623\u062E\u0636\u0631 \u0632\u0645\u0631\u062F\u064A", hex: "#0F3D2E", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A" },
-  { name: "\u0631\u0645\u0627\u062F\u064A \u0641\u062D\u0645\u064A", hex: "#3A3D40", extraPrice: 0, defaultThreadHex: "#e5e0d8", defaultThreadName: "\u0641\u0636\u064A" }
+const ROYAL_SIX_STOLE_COLORS = [
+  { name: "\u0623\u0633\u0648\u062F \u0645\u0644\u0643\u064A", hex: "#141414", extraPrice: 0, defaultThreadHex: "#e2e8f0", defaultThreadName: "\u0641\u0636\u064A \u0644\u0624\u0644\u0624\u064A" },
+  { name: "\u0623\u0628\u064A\u0636 \u0639\u0627\u062C\u064A", hex: "#F7F3EA", extraPrice: 0, defaultThreadHex: "#762b43", defaultThreadName: "\u0628\u0648\u0631\u063A\u0646\u062F\u064A" },
+  { name: "\u0628\u0648\u0631\u063A\u0646\u062F\u064A", hex: "#5E1734", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A \u0645\u0644\u0643\u064A" },
+  { name: "\u0623\u062E\u0636\u0631 \u0645\u0644\u0643\u064A", hex: "#0B4432", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A \u0645\u0644\u0643\u064A" },
+  { name: "\u0643\u062D\u0644\u064A \u062F\u0627\u0643\u0646", hex: "#132238", extraPrice: 0, defaultThreadHex: "#e2e8f0", defaultThreadName: "\u0641\u0636\u064A \u0644\u0624\u0644\u0624\u064A" },
+  { name: "\u0628\u064A\u062C \u0643\u0631\u064A\u0645\u064A", hex: "#E7D8C9", extraPrice: 0, defaultThreadHex: "#5E1734", defaultThreadName: "\u0628\u0648\u0631\u063A\u0646\u062F\u064A" }
 ];
+const ROYAL_FIVE_STOLE_COLORS = ROYAL_SIX_STOLE_COLORS;
 const STOLE_COLORS = [
   { name: "\u0623\u0633\u0648\u062F \u0645\u0644\u0643\u064A", hex: "#141212", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A" },
   { name: "\u0628\u0648\u0631\u063A\u0646\u062F\u064A", hex: "#6c1e34", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A" },
@@ -298,6 +301,21 @@ const DEFAULT_PRODUCTS = [
       { label: "\u062F\u0627\u0646", price: 4900 }
     ],
     noCapDeduction: 500
+  },
+  {
+    id: "shawl-crystal-royal-1",
+    category: "shawl",
+    branch: "\u0634\u0627\u0644 \u0645\u0644\u0643\u064A \u0645\u0631\u0635\u0639 \u0628\u0627\u0644\u0643\u0631\u064A\u0633\u062A\u0627\u0644",
+    name: "\u0634\u0627\u0644 \u0645\u0644\u0643\u064A \u0645\u0631\u0635\u0639 \u0628\u0627\u0644\u0643\u0631\u064A\u0633\u062A\u0627\u0644",
+    description: "\u0634\u0627\u0644 \u062A\u062E\u0631\u062C \u0645\u0644\u0643\u064A \u0641\u0627\u062E\u0631 \u0645\u0631\u0635\u0639 \u0628\u0627\u0644\u0643\u0631\u064A\u0633\u062A\u0627\u0644 \u0627\u0644\u0644\u0627\u0645\u0639 \u0639\u0644\u0649 \u0627\u0644\u0648\u0634\u0627\u062D \u0648\u0627\u0644\u0642\u0628\u0639\u0629 \u0628\u062A\u0641\u0635\u064A\u0644 \u064A\u062F\u0648\u064A \u0645\u062A\u0642\u0646\u060C \u0645\u062A\u0648\u0641\u0631 \u0628\u0633\u062A\u0629 \u0623\u0644\u0648\u0627\u0646 \u0645\u0644\u0643\u064A\u0629 \u0645\u0646\u062A\u0642\u0627\u0629.",
+    basePrice: 5500,
+    imageUrl: SHAWL_CRYSTAL_ROYAL_IMAGE_PATH,
+    options: [
+      { label: "\u0643\u0631\u064A\u0628", price: 5500 },
+      { label: "\u062F\u0627\u0646", price: 6000 }
+    ],
+    noCapDeduction: 500,
+    disableAutoColorize: true
   },
   {
     id: "shawl-american-1",
@@ -573,8 +591,10 @@ export {
   PRICING_TABLE_ROWS,
   ROBE_IMAGE_PATH,
   ROYAL_FIVE_STOLE_COLORS,
+  ROYAL_SIX_STOLE_COLORS,
   SHAWL_AMERICAN_IMAGE_PATH,
   SHAWL_BACK_IMAGE_PATH,
+  SHAWL_CRYSTAL_ROYAL_IMAGE_PATH,
   SHAWL_IMAGE_PATH,
   SHAWL_MISS_IMAGE_PATH,
   SHAWL_REGULAR_IMAGE_PATH,

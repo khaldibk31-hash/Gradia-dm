@@ -44,6 +44,7 @@ import {
   DEFAULT_SHOWCASE_PHOTOS,
   DEFAULT_STORE_STATE,
   ROBE_IMAGE_PATH,
+  ROYAL_SIX_STOLE_COLORS,
   SHAWL_IMAGE_PATH,
   WHATSAPP_NUMBER,
   formatWhatsAppNumber
@@ -115,6 +116,40 @@ function syncCustomProductsToTexts(products, texts) {
     delete nextTexts["catalog.customProducts"];
   }
   return nextTexts;
+}
+function sanitizeCrystalRoyalColors(raw) {
+  let parsed = [];
+  if (typeof raw === "string" && raw.trim()) {
+    try {
+      const json = JSON.parse(raw);
+      if (Array.isArray(json)) parsed = json;
+    } catch {
+      parsed = [];
+    }
+  } else if (Array.isArray(raw)) {
+    parsed = raw;
+  }
+  return ROYAL_SIX_STOLE_COLORS.map((fallback, idx) => {
+    const item = parsed[idx];
+    if (!item || typeof item !== "object") {
+      return { ...fallback };
+    }
+    const cleanName = typeof item.name === "string" && item.name.trim() ? item.name.trim() : fallback.name;
+    const rawHex = typeof item.hex === "string" ? item.hex.trim() : "";
+    const cleanHex = /^#[0-9a-fA-F]{6}$/.test(rawHex) ? rawHex.toUpperCase() : fallback.hex;
+    const rawExtra = Number(item.extraPrice);
+    const cleanExtra = Number.isFinite(rawExtra) && rawExtra >= 0 ? Math.round(rawExtra) : fallback.extraPrice ?? 0;
+    const rawThreadHex = typeof item.defaultThreadHex === "string" ? item.defaultThreadHex.trim() : "";
+    const cleanThreadHex = /^#[0-9a-fA-F]{6}$/.test(rawThreadHex) ? rawThreadHex : fallback.defaultThreadHex;
+    const cleanThreadName = typeof item.defaultThreadName === "string" && item.defaultThreadName.trim() ? item.defaultThreadName.trim() : fallback.defaultThreadName;
+    return {
+      name: cleanName,
+      hex: cleanHex,
+      extraPrice: cleanExtra,
+      defaultThreadHex: cleanThreadHex,
+      defaultThreadName: cleanThreadName
+    };
+  });
 }
 import MetaPixelConsent from "@/components/MetaPixelConsent";
 import { trackMeta, META_PIXEL_SETTING_KEY } from "@/lib/metaPixel";
@@ -305,6 +340,15 @@ function App() {
           ...baseProducts,
           ...customProductsFromSettings.filter((cp) => !existingIds.has(cp.id))
         ];
+        if (!deletedSet.has("shawl-crystal-royal-1") && !mergedSource.some((p) => p.id === "shawl-crystal-royal-1")) {
+          const crystalDefault = DEFAULT_PRODUCTS.find((p) => p.id === "shawl-crystal-royal-1");
+          if (crystalDefault) {
+            const backIdx = mergedSource.findIndex((p) => p.id === "shawl-back-1");
+            const americanIdx = mergedSource.findIndex((p) => p.id === "shawl-american-1");
+            const insertIdx = backIdx >= 0 ? backIdx + 1 : americanIdx >= 0 ? americanIdx : mergedSource.length;
+            mergedSource.splice(insertIdx, 0, { ...crystalDefault });
+          }
+        }
         const nextProducts = mergedSource.filter((p) => !deletedSet.has(p.id)).map((p) => {
           const override = priceOverrides[p.id];
           const sc = hydratedProductColorImages[p.id];
@@ -312,12 +356,16 @@ function App() {
           const customName = hydratedTexts[`product.${p.id}.name`];
           const customBranch = hydratedTexts[`product.${p.id}.branch`];
           const customDesc = hydratedTexts[`product.${p.id}.desc`];
-          const disableAutoColorize = disabledColorizeSet.size > 0 ? disabledColorizeSet.has(p.id) : Boolean(p.disableAutoColorize);
+          const hasCustomImageUrl = Object.prototype.hasOwnProperty.call(hydratedTexts, `product.${p.id}.imageUrl`);
+          const customImageUrl = hydratedTexts[`product.${p.id}.imageUrl`];
+          const explicitAutoColorize = hydratedTexts[`product.${p.id}.autoColorize`];
+          const disableAutoColorize = explicitAutoColorize === "1" ? false : explicitAutoColorize === "0" ? true : disabledColorizeSet.size > 0 && p.id !== "shawl-crystal-royal-1" ? disabledColorizeSet.has(p.id) : Boolean(p.disableAutoColorize);
           return {
             ...p,
             ...customName ? { name: customName } : {},
             ...customBranch ? { branch: customBranch } : {},
             ...customDesc ? { description: customDesc } : {},
+            ...hasCustomImageUrl ? { imageUrl: customImageUrl } : {},
             ...disableAutoColorize ? { disableAutoColorize: true } : { disableAutoColorize: false },
             ...override ? {
               basePrice: override.basePrice,
@@ -920,25 +968,38 @@ function App() {
       const nextProducts = storeState.products.map(
         (p) => p.id === productId ? { ...p, imageUrl: url } : p
       );
-      const nextTexts = syncCustomProductsToTexts(
-        nextProducts,
-        dynamicSettings.customTexts ?? storeState.customTexts ?? {}
-      );
+      const nextTexts = syncCustomProductsToTexts(nextProducts, {
+        ...dynamicSettings.customTexts ?? storeState.customTexts ?? {},
+        [`product.${productId}.imageUrl`]: url
+      });
       const nextDynamic = {
         ...dynamicSettings,
         customTexts: nextTexts,
         updatedAt: (/* @__PURE__ */ new Date()).toISOString()
       };
-      writeCachedProducts(nextProducts);
-      writeCachedDynamicSettings(nextDynamic);
-      setDynamicSettings(nextDynamic);
-      setStoreState((prev) => ({
-        ...prev,
+      const nextState = {
+        ...storeState,
         products: nextProducts,
         customTexts: nextTexts,
         dynamicSettings: nextDynamic
-      }));
-      notify("success", '\u062A\u0645 \u062A\u062D\u062F\u064A\u062B \u0635\u0648\u0631\u0629 \u0627\u0644\u0645\u0646\u062A\u062C. \u0627\u0636\u063A\u0637\u064A "\u062D\u0641\u0638 \u0648\u0646\u0634\u0631" \u0644\u062A\u062B\u0628\u064A\u062A\u0647\u0627.');
+      };
+      writeCachedProducts(nextProducts);
+      writeCachedDynamicSettings(nextDynamic);
+      setDynamicSettings(nextDynamic);
+      setStoreState(nextState);
+      try {
+        const res = await saveDynamicSettings(nextDynamic, nextState);
+        if (res.normalizedSettings) {
+          setDynamicSettings(res.normalizedSettings);
+        }
+        if (res.savedToStoreSettings || res.savedToBackup) {
+          notify("success", "\u062A\u0645 \u062A\u062D\u062F\u064A\u062B \u0635\u0648\u0631\u0629 \u0627\u0644\u0645\u0646\u062A\u062C \u0648\u062D\u0641\u0638\u0647\u0627 \u0628\u0646\u062C\u0627\u062D!");
+        } else {
+          notify("info", '\u062A\u0645 \u062A\u062D\u062F\u064A\u062B \u0635\u0648\u0631\u0629 \u0627\u0644\u0645\u0646\u062A\u062C \u0645\u062D\u0644\u064A\u0627\u064B. \u0627\u0636\u063A\u0637\u064A "\u062D\u0641\u0638 \u0648\u0646\u0634\u0631" \u0644\u062A\u062B\u0628\u064A\u062A\u0647\u0627.');
+        }
+      } catch {
+        notify("info", '\u062A\u0645 \u062A\u062D\u062F\u064A\u062B \u0635\u0648\u0631\u0629 \u0627\u0644\u0645\u0646\u062A\u062C \u0645\u062D\u0644\u064A\u0627\u064B. \u0627\u0636\u063A\u0637\u064A "\u062D\u0641\u0638 \u0648\u0646\u0634\u0631" \u0644\u062A\u062B\u0628\u064A\u062A\u0647\u0627.');
+      }
     } catch (err) {
       notify(
         "error",
@@ -1168,7 +1229,11 @@ function App() {
       };
       const nextTexts = syncCustomProductsToTexts(nextProducts, {
         ...dynamicSettings.customTexts ?? storeState.customTexts ?? {},
-        "catalog.priceOverrides": JSON.stringify(nextOverrides)
+        "catalog.priceOverrides": JSON.stringify(nextOverrides),
+        [`product.${payload.id}.name`]: payload.name,
+        [`product.${payload.id}.branch`]: payload.branch,
+        [`product.${payload.id}.desc`]: payload.description,
+        [`product.${payload.id}.imageUrl`]: imageUrl
       });
       const nextDynamic = {
         ...dynamicSettings,
@@ -1313,7 +1378,10 @@ function App() {
     delete nextTexts[`product.${productId}.name`];
     delete nextTexts[`product.${productId}.branch`];
     delete nextTexts[`product.${productId}.desc`];
+    delete nextTexts[`product.${productId}.imageUrl`];
+    delete nextTexts[`product.${productId}.autoColorize`];
     if (nextDisabledColorizeIds.length > 0) {
+      nextTexts["catalog.deletedIds"] = JSON.stringify(nextDeletedIds);
       nextTexts["catalog.disabledColorizeIds"] = JSON.stringify(
         nextDisabledColorizeIds
       );
@@ -1339,16 +1407,28 @@ function App() {
       productColorImages: nextColorImages,
       updatedAt: (/* @__PURE__ */ new Date()).toISOString()
     };
-    writeCachedProducts(nextProducts);
-    writeCachedDynamicSettings(nextDynamic);
-    setDynamicSettings(nextDynamic);
-    setStoreState((prev) => ({
-      ...prev,
+    const nextState = {
+      ...storeState,
       products: nextProducts,
       customTexts: nextTexts,
       dynamicSettings: nextDynamic
-    }));
-    notify("info", '\u062A\u0645 \u062D\u0630\u0641 \u0627\u0644\u0645\u0648\u062F\u064A\u0644. \u0627\u0636\u063A\u0637\u064A "\u062D\u0641\u0638 \u0648\u0646\u0634\u0631" \u0644\u062A\u0623\u0643\u064A\u062F \u0627\u0644\u062A\u063A\u064A\u064A\u0631 \u0633\u062D\u0627\u0628\u064A\u0627\u064B.');
+    };
+    writeCachedProducts(nextProducts);
+    writeCachedDynamicSettings(nextDynamic);
+    setDynamicSettings(nextDynamic);
+    setStoreState(nextState);
+    void saveDynamicSettings(nextDynamic, nextState).then((res) => {
+      if (res.normalizedSettings) {
+        setDynamicSettings(res.normalizedSettings);
+      }
+      if (res.savedToStoreSettings || res.savedToBackup) {
+        notify("success", "\u062A\u0645 \u062D\u0630\u0641 \u0627\u0644\u0646\u0648\u0639 \u0648\u062D\u0641\u0638 \u0627\u0644\u062A\u063A\u064A\u064A\u0631 \u0641\u064A \u0627\u0644\u0645\u062A\u062C\u0631 \u0628\u0646\u062C\u0627\u062D!");
+      } else {
+        notify("info", '\u062A\u0645 \u062D\u0630\u0641 \u0627\u0644\u0646\u0648\u0639 \u0645\u062D\u0644\u064A\u0627\u064B. \u0627\u0636\u063A\u0637\u064A "\u062D\u0641\u0638 \u0648\u0646\u0634\u0631" \u0644\u062A\u0623\u0643\u064A\u062F \u0627\u0644\u062A\u063A\u064A\u064A\u0631 \u0633\u062D\u0627\u0628\u064A\u0627\u064B.');
+      }
+    }).catch(() => {
+      notify("info", '\u062A\u0645 \u062D\u0630\u0641 \u0627\u0644\u0646\u0648\u0639 \u0645\u062D\u0644\u064A\u0627\u064B. \u0627\u0636\u063A\u0637\u064A "\u062D\u0641\u0638 \u0648\u0646\u0634\u0631" \u0644\u062A\u0623\u0643\u064A\u062F \u0627\u0644\u062A\u063A\u064A\u064A\u0631 \u0633\u062D\u0627\u0628\u064A\u0627\u064B.');
+    });
   };
   const handleUpdateProductPrice = async (productId, nextPrice, optionIdx) => {
     const safePrice = Math.max(0, Math.round(nextPrice));
@@ -1465,7 +1545,8 @@ function App() {
     });
     const nextDisabledIds = nextProducts.filter((p) => Boolean(p.disableAutoColorize)).map((p) => p.id);
     const nextTexts = syncCustomProductsToTexts(nextProducts, {
-      ...dynamicSettings.customTexts ?? storeState.customTexts ?? {}
+      ...dynamicSettings.customTexts ?? storeState.customTexts ?? {},
+      [`product.${productId}.autoColorize`]: nextDisabledState ? "0" : "1"
     });
     if (nextDisabledIds.length > 0) {
       nextTexts["catalog.disabledColorizeIds"] = JSON.stringify(nextDisabledIds);
@@ -1578,6 +1659,39 @@ function App() {
       }
     } catch {
       notify("info", '\u062A\u0645 \u062D\u0641\u0638 \u0627\u0644\u0633\u0639\u0631 \u0645\u062D\u0644\u064A\u0627\u064B. \u0627\u0636\u063A\u0637\u064A "\u062D\u0641\u0638 \u0648\u0646\u0634\u0631" \u0644\u062A\u062B\u0628\u064A\u062A\u0647 \u0633\u062D\u0627\u0628\u064A\u0627\u064B.');
+    }
+  };
+  const handleUpdateCrystalRoyalColors = async (nextColors) => {
+    const cleaned = sanitizeCrystalRoyalColors(nextColors);
+    const nextTexts = {
+      ...dynamicSettings.customTexts ?? storeState.customTexts ?? {},
+      "catalog.crystalRoyalColors": JSON.stringify(cleaned)
+    };
+    const nextDynamic = {
+      ...dynamicSettings,
+      customTexts: nextTexts,
+      updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    const nextState = {
+      ...storeState,
+      customTexts: nextTexts,
+      dynamicSettings: nextDynamic
+    };
+    writeCachedDynamicSettings(nextDynamic);
+    setDynamicSettings(nextDynamic);
+    setStoreState(nextState);
+    try {
+      const result = await saveDynamicSettings(nextDynamic, nextState);
+      if (result.normalizedSettings) {
+        setDynamicSettings(result.normalizedSettings);
+      }
+      if (result.savedToStoreSettings || result.savedToBackup) {
+        notify("success", "\u062A\u0645 \u062D\u0641\u0638 \u0627\u0644\u0623\u0644\u0648\u0627\u0646 \u0627\u0644\u0633\u062A\u0629 \u0644\u0634\u0627\u0644 \u0627\u0644\u0643\u0631\u064A\u0633\u062A\u0627\u0644 \u0627\u0644\u0645\u0644\u0643\u064A \u0628\u0646\u062C\u0627\u062D!");
+      } else {
+        notify("info", '\u062A\u0645 \u062D\u0641\u0638 \u0627\u0644\u0623\u0644\u0648\u0627\u0646 \u0645\u062D\u0644\u064A\u0627\u064B. \u0627\u0636\u063A\u0637\u064A "\u062D\u0641\u0638 \u0648\u0646\u0634\u0631" \u0644\u062A\u062B\u0628\u064A\u062A\u0647\u0627 \u0633\u062D\u0627\u0628\u064A\u0627\u064B.');
+      }
+    } catch {
+      notify("info", '\u062A\u0645 \u062D\u0641\u0638 \u0627\u0644\u0623\u0644\u0648\u0627\u0646 \u0645\u062D\u0644\u064A\u0627\u064B. \u0627\u0636\u063A\u0637\u064A "\u062D\u0641\u0638 \u0648\u0646\u0634\u0631" \u0644\u062A\u062B\u0628\u064A\u062A\u0647\u0627 \u0633\u062D\u0627\u0628\u064A\u0627\u064B.');
     }
   };
   const handleSaveCopy = (nextCopy) => {
@@ -1897,6 +2011,10 @@ function App() {
                         whatsappNumber: storeWhatsappNumber,
                         onExpressCheckout: () => openAppModal("cart"),
                         stoleColors: dynamicSettings.stoleColors,
+                        crystalRoyalColors: sanitizeCrystalRoyalColors(
+                          dynamicSettings.customTexts?.["catalog.crystalRoyalColors"] ?? storeState.customTexts?.["catalog.crystalRoyalColors"]
+                        ),
+                        onUpdateCrystalRoyalColors: handleUpdateCrystalRoyalColors,
                         gownColors: dynamicSettings.gownColors,
                         threadColors: dynamicSettings.threadColors,
                         capColors: dynamicSettings.capColors,
@@ -2070,24 +2188,27 @@ function App() {
                           const nextProducts = storeState.products.map(
                             (p) => p.id === id ? { ...p, imageUrl: "" } : p
                           );
-                          const nextTexts = syncCustomProductsToTexts(
-                            nextProducts,
-                            dynamicSettings.customTexts ?? storeState.customTexts ?? {}
-                          );
+                          const nextTexts = syncCustomProductsToTexts(nextProducts, {
+                            ...dynamicSettings.customTexts ?? storeState.customTexts ?? {},
+                            [`product.${id}.imageUrl`]: ""
+                          });
                           const nextDynamic = {
                             ...dynamicSettings,
                             customTexts: nextTexts,
                             updatedAt: (/* @__PURE__ */ new Date()).toISOString()
                           };
-                          writeCachedProducts(nextProducts);
-                          writeCachedDynamicSettings(nextDynamic);
-                          setDynamicSettings(nextDynamic);
-                          setStoreState((prev) => ({
-                            ...prev,
+                          const nextState = {
+                            ...storeState,
                             products: nextProducts,
                             customTexts: nextTexts,
                             dynamicSettings: nextDynamic
-                          }));
+                          };
+                          writeCachedProducts(nextProducts);
+                          writeCachedDynamicSettings(nextDynamic);
+                          setDynamicSettings(nextDynamic);
+                          setStoreState(nextState);
+                          void saveDynamicSettings(nextDynamic, nextState).catch(() => {
+                          });
                           notify("info", '\u062A\u0645\u062A \u0625\u0632\u0627\u0644\u0629 \u0627\u0644\u0635\u0648\u0631\u0629. \u0627\u0636\u063A\u0637\u064A "\u062D\u0641\u0638 \u0648\u0646\u0634\u0631" \u0644\u062A\u062B\u0628\u064A\u062A \u0627\u0644\u062A\u063A\u064A\u064A\u0631.');
                         },
                         onSetProductColorImage: async (id, colorName, file) => {

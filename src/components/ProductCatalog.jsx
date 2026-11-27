@@ -27,7 +27,7 @@ import {
   DEFAULT_GOWN_COLORS,
   DEFAULT_STOLE_COLORS,
   ROBE_IMAGE_PATH,
-  ROYAL_FIVE_STOLE_COLORS,
+  ROYAL_SIX_STOLE_COLORS,
   SHAWL_AMERICAN_IMAGE_PATH,
   SHAWL_BACK_IMAGE_PATH,
   SHAWL_IMAGE_PATH,
@@ -137,6 +137,8 @@ function ProductDetailView({
   regularShawlBaseImage,
   initialDesign = null,
   stoleColors,
+  crystalRoyalColors,
+  onUpdateCrystalRoyalColors,
   gownColors,
   threadColors,
   capColors,
@@ -166,16 +168,14 @@ function ProductDetailView({
   const isStoleProduct = product.category === "shawl";
   const normalizedProductTitle = product.name.trim().replace(/أ/g, "\u0627");
   const isAmericanShawlPreview = isStoleProduct && normalizedProductTitle === "\u0627\u0644\u0634\u0627\u0644 \u0627\u0644\u0627\u0645\u0631\u064A\u0643\u064A";
-  const isCrystalRoyalStole = isStoleProduct && (normalizedProductTitle.includes("\u0643\u0631\u064A\u0633\u062A\u0627\u0644") || normalizedProductTitle.includes("\u0645\u0631\u0635\u0639"));
+  const isCrystalRoyalStole = isStoleProduct && (product.id === "shawl-crystal-royal-1" || normalizedProductTitle.includes("\u0643\u0631\u064A\u0633\u062A\u0627\u0644") || normalizedProductTitle.includes("\u0645\u0631\u0635\u0639"));
   const resolvedStoleColors = useMemo(() => {
     if (isCrystalRoyalStole) {
-      return ROYAL_FIVE_STOLE_COLORS.map((royal) => {
-        const match = stoleColors.find((c) => c.name === royal.name);
-        return match ? { ...royal, extraPrice: match.extraPrice } : royal;
-      });
+      const source = Array.isArray(crystalRoyalColors) && crystalRoyalColors.length > 0 ? crystalRoyalColors : ROYAL_SIX_STOLE_COLORS;
+      return source.slice(0, 6);
     }
     return stoleColors.length > 0 ? stoleColors : DEFAULT_STOLE_COLORS;
-  }, [isCrystalRoyalStole, stoleColors]);
+  }, [isCrystalRoyalStole, crystalRoyalColors, stoleColors]);
   const activeMainColors = product.category === "cap" ? capColors.length > 0 ? capColors : CAP_SWATCHES : product.category === "robe" ? gownColors.length > 0 ? gownColors : DEFAULT_GOWN_COLORS : resolvedStoleColors;
   const activeThreadColors = threadColors.length > 0 ? threadColors : THREAD_COLORS;
   const activeCapColors = capColors.length > 0 ? capColors : CAP_SWATCHES;
@@ -371,6 +371,25 @@ function ProductDetailView({
   const [editingCapId, setEditingCapId] = useState(null);
   const [capPriceDraft, setCapPriceDraft] = useState("");
   const [savingCapPrice, setSavingCapPrice] = useState(false);
+  const [editingRoyalColors, setEditingRoyalColors] = useState(false);
+  const [royalColorDrafts, setRoyalColorDrafts] = useState(
+    () => (Array.isArray(crystalRoyalColors) && crystalRoyalColors.length > 0 ? crystalRoyalColors : ROYAL_SIX_STOLE_COLORS).slice(0, 6).map((c) => ({
+      ...c,
+      extraPrice: Number(c.extraPrice || 0)
+    }))
+  );
+  const [savingRoyalColors, setSavingRoyalColors] = useState(false);
+  useEffect(() => {
+    if (!editingRoyalColors) {
+      const source = Array.isArray(crystalRoyalColors) && crystalRoyalColors.length > 0 ? crystalRoyalColors : ROYAL_SIX_STOLE_COLORS;
+      setRoyalColorDrafts(
+        source.slice(0, 6).map((c) => ({
+          ...c,
+          extraPrice: Number(c.extraPrice || 0)
+        }))
+      );
+    }
+  }, [crystalRoyalColors, editingRoyalColors]);
   useEffect(() => {
     if (!isStoleProduct || typeof window === "undefined") return;
     try {
@@ -462,7 +481,7 @@ function ProductDetailView({
   const isAmericanShawl = product.category === "shawl" && normalizedTitle === "\u0627\u0644\u0634\u0627\u0644 \u0627\u0644\u0627\u0645\u0631\u064A\u0643\u064A";
   const isBackShawl = product.category === "shawl" && !isAmericanShawl && (product.id === "shawl-back-1" || normalizedBranch === "\u0634\u0627\u0644 \u0628\u0627\u0644\u0638\u0647\u0631" || normalizedTitle.includes("\u0634\u0627\u0644 \u0628\u0627\u0644\u0638\u0647\u0631"));
   const isRegularShawl = product.category === "shawl" && !isAmericanShawl && (product.id === "shawl-regular-1" || normalizedBranch === "\u0634\u0627\u0644 \u0639\u0627\u062F\u064A" || normalizedTitle.includes("\u0634\u0627\u0644 \u0639\u0627\u062F\u064A"));
-  const isAutoColorDisabled = isCrystalRoyalStole || Boolean(product.disableAutoColorize);
+  const isAutoColorDisabled = isCrystalRoyalStole ? product.disableAutoColorize !== false : Boolean(product.disableAutoColorize);
   const supportsAutoColorizeToggle = product.category === "robe" || isStoleProduct && !isAmericanShawl;
   const supportsLivePreview = isStoleProduct && !isAmericanShawl || product.category === "cap";
   const [visualTab, setVisualTab] = useState(
@@ -1028,11 +1047,12 @@ function ProductDetailView({
               "button",
               {
                 type: "button",
+                "aria-label": `\u062D\u0630\u0641 \u0627\u0644\u0646\u0648\u0639 ${product.name}`,
                 onClick: () => setConfirmingDelete(true),
                 className: "inline-flex items-center gap-1 text-[#BE123C] hover:underline touch-manipulation cursor-pointer font-bold",
                 children: [
                   /* @__PURE__ */ jsx(Trash2, { className: "w-3.5 h-3.5" }),
-                  /* @__PURE__ */ jsx("span", { children: "\u062D\u0630\u0641" })
+                  /* @__PURE__ */ jsx("span", { children: "\u062D\u0630\u0641 \u0627\u0644\u0646\u0648\u0639" })
                 ]
               }
             )
@@ -2521,7 +2541,7 @@ function ProductDetailView({
                     isActive && /* @__PURE__ */ jsx(
                       Check,
                       {
-                        className: `w-4 h-4 ${swatch.hex.toLowerCase() === "#f5f5f4" || swatch.hex.toLowerCase() === "#e7d8c9" || swatch.hex.toLowerCase() === "#9ca3af" || swatch.hex.toLowerCase() === "#ede6d8" || swatch.hex.toLowerCase() === "#f4efe6" || swatch.hex.toLowerCase() === "#ffffff" ? "text-[#1A1617]" : "text-white"}`
+                        className: `w-4 h-4 ${swatch.hex.toLowerCase() === "#f5f5f4" || swatch.hex.toLowerCase() === "#e7d8c9" || swatch.hex.toLowerCase() === "#9ca3af" || swatch.hex.toLowerCase() === "#ede6d8" || swatch.hex.toLowerCase() === "#f4efe6" || swatch.hex.toLowerCase() === "#f7f3ea" || swatch.hex.toLowerCase() === "#faf8f5" || swatch.hex.toLowerCase() === "#ffffff" ? "text-[#1A1617]" : "text-white"}`
                       }
                     ),
                     hasPhoto && !isActive && /* @__PURE__ */ jsx("span", { className: "absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#5E1734] border border-white" })
@@ -2531,6 +2551,117 @@ function ProductDetailView({
               );
             }) }),
             isAdminMode && /* @__PURE__ */ jsxs("div", { className: "mt-3 p-3 rounded-2xl bg-[#FAF8F5] border border-[#C6A355]/35 space-y-2", children: [
+              isCrystalRoyalStole && onUpdateCrystalRoyalColors && /* @__PURE__ */ jsxs("div", { className: "pb-2.5 border-b border-[#C6A355]/30 space-y-2", children: [
+                /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap items-center justify-between gap-2", children: [
+                  /* @__PURE__ */ jsx("span", { className: "text-xs font-bold text-[#1A1617]", children: "\u0644\u0648\u062D\u0629 \u0627\u0644\u0623\u0644\u0648\u0627\u0646 \u0627\u0644\u0645\u0644\u0643\u064A\u0629 \u0627\u0644\u0633\u062A\u0629 (6 \u0623\u0644\u0648\u0627\u0646 \u0641\u0642\u0637):" }),
+                  /* @__PURE__ */ jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: () => setEditingRoyalColors((v) => !v),
+                      className: "inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-white hover:bg-[#F3EDE2] border border-[#C6A355]/55 text-xs font-bold text-[#5E1734] cursor-pointer",
+                      children: editingRoyalColors ? "\u0625\u063A\u0644\u0627\u0642 \u062A\u0639\u062F\u064A\u0644 \u0627\u0644\u0623\u0644\u0648\u0627\u0646" : "\u{1F3A8} \u062A\u062E\u0635\u064A\u0635 \u0627\u0644\u0623\u0644\u0648\u0627\u0646 \u0627\u0644\u0633\u062A\u0629"
+                    }
+                  )
+                ] }),
+                editingRoyalColors && /* @__PURE__ */ jsxs("div", { className: "space-y-2 pt-1", children: [
+                  /* @__PURE__ */ jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-2", children: royalColorDrafts.map((draft, idx) => /* @__PURE__ */ jsxs(
+                    "div",
+                    {
+                      className: "flex items-center gap-1.5 p-1.5 rounded-xl bg-white border border-[#C6A355]/35",
+                      children: [
+                        /* @__PURE__ */ jsx(
+                          "input",
+                          {
+                            type: "color",
+                            value: /^#[0-9a-fA-F]{6}$/.test(draft.hex) ? draft.hex : "#141414",
+                            "aria-label": `\u062F\u0631\u062C\u0629 \u0627\u0644\u0644\u0648\u0646 ${idx + 1}`,
+                            onChange: (e) => {
+                              const nextHex = e.target.value.toUpperCase();
+                              setRoyalColorDrafts((prev) => prev.map((item, i) => i === idx ? { ...item, hex: nextHex } : item));
+                            },
+                            className: "w-7 h-7 rounded-lg border border-[#C6A355]/45 cursor-pointer shrink-0 p-0 bg-transparent"
+                          }
+                        ),
+                        /* @__PURE__ */ jsx(
+                          "input",
+                          {
+                            type: "text",
+                            value: draft.name,
+                            "aria-label": `\u0627\u0633\u0645 \u0627\u0644\u0644\u0648\u0646 ${idx + 1}`,
+                            onChange: (e) => {
+                              const val = e.target.value;
+                              setRoyalColorDrafts((prev) => prev.map((item, i) => i === idx ? { ...item, name: val } : item));
+                            },
+                            className: "flex-1 min-w-0 px-2 py-1 rounded-lg border border-[#C6A355]/30 bg-[#FAF8F5] text-xs font-bold text-[#1A1617]"
+                          }
+                        ),
+                        /* @__PURE__ */ jsx(
+                          "input",
+                          {
+                            type: "number",
+                            min: 0,
+                            step: 50,
+                            value: draft.extraPrice ?? 0,
+                            title: "\u0632\u064A\u0627\u062F\u0629 \u0627\u0644\u0633\u0639\u0631 (\u062F\u062C)",
+                            "aria-label": `\u0633\u0639\u0631 \u0625\u0636\u0627\u0641\u064A \u0644\u0644\u0648\u0646 ${idx + 1}`,
+                            onChange: (e) => {
+                              const num = Math.max(0, Number(e.target.value || 0));
+                              setRoyalColorDrafts((prev) => prev.map((item, i) => i === idx ? { ...item, extraPrice: Number.isFinite(num) ? num : 0 } : item));
+                            },
+                            className: "w-16 px-1.5 py-1 rounded-lg border border-[#C6A355]/30 bg-[#FAF8F5] text-xs font-bold text-[#1A1617] text-center tabular-nums"
+                          }
+                        ),
+                        /* @__PURE__ */ jsx("span", { className: "text-[10px] font-bold text-[#65525A]", children: "\u062F\u062C" })
+                      ]
+                    },
+                    idx
+                  )) }),
+                  /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap items-center justify-end gap-2 pt-1", children: [
+                    /* @__PURE__ */ jsxs(
+                      "button",
+                      {
+                        type: "button",
+                        disabled: savingRoyalColors,
+                        onClick: async () => {
+                          setSavingRoyalColors(true);
+                          try {
+                            const defaults = ROYAL_SIX_STOLE_COLORS.map((c) => ({ ...c }));
+                            setRoyalColorDrafts(defaults);
+                            await onUpdateCrystalRoyalColors(defaults);
+                            setEditingRoyalColors(false);
+                          } finally {
+                            setSavingRoyalColors(false);
+                          }
+                        },
+                        className: "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white hover:bg-[#F3EDE2] border border-[#C6A355]/45 text-xs font-bold text-[#65525A] cursor-pointer disabled:opacity-60",
+                        children: [
+                          /* @__PURE__ */ jsx(RotateCcw, { className: "w-3 h-3" }),
+                          /* @__PURE__ */ jsx("span", { children: "\u0627\u0633\u062A\u0639\u0627\u062F\u0629 \u0627\u0644\u0627\u0641\u062A\u0631\u0627\u0636\u064A" })
+                        ]
+                      }
+                    ),
+                    /* @__PURE__ */ jsx(
+                      "button",
+                      {
+                        type: "button",
+                        disabled: savingRoyalColors,
+                        onClick: async () => {
+                          setSavingRoyalColors(true);
+                          try {
+                            await onUpdateCrystalRoyalColors(royalColorDrafts);
+                            setEditingRoyalColors(false);
+                          } finally {
+                            setSavingRoyalColors(false);
+                          }
+                        },
+                        className: "inline-flex items-center gap-1 px-3.5 py-1.5 rounded-xl bg-[#5E1734] hover:bg-[#4A1129] text-white text-xs font-bold cursor-pointer disabled:opacity-60",
+                        children: savingRoyalColors ? "\u062C\u0627\u0631\u064A \u0627\u0644\u062D\u0641\u0638..." : "\u062D\u0641\u0638 \u0627\u0644\u0623\u0644\u0648\u0627\u0646 \u0627\u0644\u0633\u062A\u0629"
+                      }
+                    )
+                  ] })
+                ] })
+              ] }),
               supportsAutoColorizeToggle && onToggleAutoColorize && /* @__PURE__ */ jsxs("div", { className: "pb-2 border-b border-[#C6A355]/30 flex flex-wrap items-center justify-between gap-2", children: [
                 /* @__PURE__ */ jsx("span", { className: "text-xs font-bold text-[#1A1617]", children: "\u0627\u0644\u062A\u0644\u0648\u064A\u0646 \u0627\u0644\u062A\u0644\u0642\u0627\u0626\u064A \u0644\u0635\u0648\u0631\u0629 \u0627\u0644\u0645\u0646\u062A\u062C:" }),
                 /* @__PURE__ */ jsx(
@@ -3428,11 +3559,12 @@ function SectionCard({
                       "button",
                       {
                         type: "button",
+                        "aria-label": `\u062D\u0630\u0641 \u0627\u0644\u0646\u0648\u0639 ${product.name}`,
                         onClick: handleStartDelete,
                         className: "inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-[#BE123C] text-white text-[10px] sm:text-[11px] font-bold shadow-2xs hover:bg-[#9F1239] cursor-pointer",
                         children: [
                           /* @__PURE__ */ jsx(Trash2, { className: "w-3 h-3" }),
-                          /* @__PURE__ */ jsx("span", { children: "\u062D\u0630\u0641" })
+                          /* @__PURE__ */ jsx("span", { children: "\u062D\u0630\u0641 \u0627\u0644\u0646\u0648\u0639" })
                         ]
                       }
                     )
@@ -3800,11 +3932,12 @@ function SectionCard({
                         "button",
                         {
                           type: "button",
+                          "aria-label": `\u062D\u0630\u0641 \u0627\u0644\u0646\u0648\u0639 ${product.name}`,
                           onClick: handleStartDelete,
                           className: "inline-flex items-center gap-1 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg bg-[#BE123C]/95 backdrop-blur-sm text-white text-[10px] sm:text-[11px] font-bold shadow-sm hover:bg-[#9F1239] cursor-pointer",
                           children: [
                             /* @__PURE__ */ jsx(Trash2, { className: "w-3 h-3" }),
-                            /* @__PURE__ */ jsx("span", { children: "\u062D\u0630\u0641" })
+                            /* @__PURE__ */ jsx("span", { children: "\u062D\u0630\u0641 \u0627\u0644\u0646\u0648\u0639" })
                           ]
                         }
                       )
@@ -3977,6 +4110,8 @@ function ProductCatalog({
   categoryPauseBadge = "\u064A\u062A\u0648\u0641\u0631 \u0642\u0631\u064A\u0628\u0627\u064B",
   storewideDiscountPercent = 0,
   stoleColors = DEFAULT_STOLE_COLORS,
+  crystalRoyalColors,
+  onUpdateCrystalRoyalColors,
   gownColors = DEFAULT_GOWN_COLORS,
   threadColors = THREAD_COLORS,
   capColors = CAP_SWATCHES,
@@ -4282,7 +4417,20 @@ function ProductCatalog({
   });
   const defaultBranchesForSection = selectedSection && CATEGORY_BRANCHES[selectedSection] ? CATEGORY_BRANCHES[selectedSection] : ["\u0627\u0644\u0643\u0644"];
   const customBranchesForSection = selectedSection && categoryBranches?.[selectedSection]?.length ? categoryBranches[selectedSection] : null;
-  const branches = customBranchesForSection || defaultBranchesForSection;
+  const branches = useMemo(() => {
+    const base = customBranchesForSection || defaultBranchesForSection;
+    if (selectedSection === "shawl" && sectionProducts.some((p) => p.branch === "\u0634\u0627\u0644 \u0645\u0644\u0643\u064A \u0645\u0631\u0635\u0639 \u0628\u0627\u0644\u0643\u0631\u064A\u0633\u062A\u0627\u0644") && !base.includes("\u0634\u0627\u0644 \u0645\u0644\u0643\u064A \u0645\u0631\u0635\u0639 \u0628\u0627\u0644\u0643\u0631\u064A\u0633\u062A\u0627\u0644")) {
+      const next = [...base];
+      const backIdx = next.indexOf("\u0634\u0627\u0644 \u0628\u0627\u0644\u0638\u0647\u0631");
+      if (backIdx >= 0) {
+        next.splice(backIdx + 1, 0, "\u0634\u0627\u0644 \u0645\u0644\u0643\u064A \u0645\u0631\u0635\u0639 \u0628\u0627\u0644\u0643\u0631\u064A\u0633\u062A\u0627\u0644");
+      } else {
+        next.push("\u0634\u0627\u0644 \u0645\u0644\u0643\u064A \u0645\u0631\u0635\u0639 \u0628\u0627\u0644\u0643\u0631\u064A\u0633\u062A\u0627\u0644");
+      }
+      return next;
+    }
+    return base;
+  }, [customBranchesForSection, defaultBranchesForSection, selectedSection, sectionProducts]);
   const filteredProducts = sectionProducts.filter((p) => {
     if (activeBranch !== "\u0627\u0644\u0643\u0644" && p.branch !== activeBranch) return false;
     return true;
@@ -4330,6 +4478,8 @@ function ProductCatalog({
                 regularShawlBaseImage,
                 initialDesign: initialSharedDesign,
                 stoleColors,
+                crystalRoyalColors,
+                onUpdateCrystalRoyalColors,
                 gownColors,
                 threadColors,
                 capColors,
