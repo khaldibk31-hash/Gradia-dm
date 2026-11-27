@@ -31,6 +31,6 @@ use the editor.
 
 ## Store migration
 - Keep TanStack Start as the application shell and mount the imported browser-dependent store behind a lazy ClientOnly boundary to prevent browser APIs from executing during SSR.
-- Preserve source database contracts until an exact schema and policy export is supplied; do not invent replacements for production columns or access rules.
+- The store stays on the user's external Supabase project; never migrate it to Lovable Cloud or change its schema (user decision).
 - Retain imported React modules as JavaScript compatibility modules while new functionality remains strictly typed; this avoids changing legacy behavior solely to satisfy unrelated source/target compiler differences.
 - Store optional tracking configuration inside the existing custom-text settings payload to avoid changing the source table schema; load Meta only after explicit visitor consent.
