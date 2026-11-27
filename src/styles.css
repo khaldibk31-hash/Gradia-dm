@@ -523,3 +523,128 @@ header {
 @keyframes kenBurns { from { transform: scale(1); } to { transform: scale(1.05); } }
 .ken-burns { animation: kenBurns 9s ease-out forwards; filter: contrast(1.03) saturate(1.05); }
 @media (prefers-reduced-motion: reduce) { .ken-burns { animation: none; } }
+
+/* Cinematic Brand Splash Screen */
+.font-luxury-serif {
+  font-family: 'Playfair Display', 'Amiri', Georgia, serif;
+}
+
+@keyframes splashAmbientBreathe {
+  0%, 100% {
+    opacity: 0.72;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes splashLogoReveal {
+  0% {
+    opacity: 0.25;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes splashShimmerSweep {
+  0% {
+    transform: translateX(-140%) translateY(-10%) rotate(18deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(140%) translateY(10%) rotate(18deg);
+    opacity: 0;
+  }
+}
+
+@keyframes splashTitleExpand {
+  0% {
+    opacity: 0;
+    letter-spacing: 0.12em;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    letter-spacing: 0.28em;
+    transform: translateY(0);
+  }
+}
+
+@keyframes splashLineExpand {
+  0% {
+    width: 0;
+    opacity: 0;
+  }
+  100% {
+    width: 5rem;
+    opacity: 1;
+  }
+}
+
+@keyframes splashTaglineFade {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.splash-ambient-breathe {
+  animation: splashAmbientBreathe 2.8s ease-in-out infinite;
+}
+
+.splash-logo-reveal {
+  animation: splashLogoReveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.splash-shimmer-sweep {
+  animation: splashShimmerSweep 0.95s cubic-bezier(0.22, 1, 0.36, 1) 0.22s both;
+}
+
+.splash-title-expand {
+  animation: splashTitleExpand 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+
+.splash-line-expand {
+  animation: splashLineExpand 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.42s both;
+}
+
+.splash-tagline-fade {
+  animation: splashTaglineFade 0.55s ease-out 0.62s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-ambient-breathe,
+  .splash-logo-reveal,
+  .splash-shimmer-sweep,
+  .splash-title-expand,
+  .splash-line-expand,
+  .splash-tagline-fade {
+    animation: none !important;
+  }
+  .splash-line-expand {
+    width: 5rem;
+    opacity: 1;
+  }
+  .splash-title-expand {
+    opacity: 1;
+    letter-spacing: 0.28em;
+  }
+  .splash-tagline-fade {
+    opacity: 1;
+  }
+}
