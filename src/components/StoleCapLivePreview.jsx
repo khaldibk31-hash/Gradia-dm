@@ -840,6 +840,9 @@ function StoleCapLivePreview({
                         {
                           src: universityLogoUrl,
                           alt: "\u0634\u0639\u0627\u0631 \u0627\u0644\u062C\u0627\u0645\u0639\u0629",
+                          referrerPolicy: "no-referrer",
+                          loading: "lazy",
+                          decoding: "async",
                           className: "w-full h-full object-cover rounded-full"
                         }
                       )
@@ -989,6 +992,9 @@ function StoleCapLivePreview({
                     {
                       src: universityLogoUrl,
                       alt: "\u0634\u0639\u0627\u0631 \u0627\u0644\u062C\u0627\u0645\u0639\u0629",
+                      referrerPolicy: "no-referrer",
+                      loading: "lazy",
+                          decoding: "async",
                       className: "w-full h-full object-cover rounded-full"
                     }
                   )

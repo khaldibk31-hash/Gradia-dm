@@ -47,7 +47,8 @@ import {
   ROYAL_SIX_STOLE_COLORS,
   SHAWL_IMAGE_PATH,
   WHATSAPP_NUMBER,
-  formatWhatsAppNumber
+  formatWhatsAppNumber,
+  normalizeLegacyAssetPath
 } from "@/data/defaultStore";
 import {
   compressReceiptImage,
@@ -357,11 +358,13 @@ function App() {
           const customBranch = hydratedTexts[`product.${p.id}.branch`];
           const customDesc = hydratedTexts[`product.${p.id}.desc`];
           const hasCustomImageUrl = Object.prototype.hasOwnProperty.call(hydratedTexts, `product.${p.id}.imageUrl`);
-          const customImageUrl = hydratedTexts[`product.${p.id}.imageUrl`];
+          const customImageUrl = normalizeLegacyAssetPath(hydratedTexts[`product.${p.id}.imageUrl`]);
+          const normalizedProductImage = normalizeLegacyAssetPath(p.imageUrl);
           const explicitAutoColorize = hydratedTexts[`product.${p.id}.autoColorize`];
           const disableAutoColorize = explicitAutoColorize === "1" ? false : explicitAutoColorize === "0" ? true : disabledColorizeSet.size > 0 && p.id !== "shawl-crystal-royal-1" ? disabledColorizeSet.has(p.id) : Boolean(p.disableAutoColorize);
           return {
             ...p,
+            imageUrl: normalizedProductImage,
             ...customName ? { name: customName } : {},
             ...customBranch ? { branch: customBranch } : {},
             ...customDesc ? { description: customDesc } : {},
@@ -839,9 +842,9 @@ function App() {
     try {
       let url;
       try {
-        url = await uploadStoreImage(file, 1400, 0.85);
+        url = await uploadStoreImage(file, 1200, 0.82);
       } catch {
-        url = await compressReceiptImage(file, 1400, 0.85);
+        url = await compressReceiptImage(file, 1200, 0.82);
       }
       const nextTexts = {
         ...dynamicSettings.customTexts ?? storeState.customTexts ?? {},
@@ -1130,9 +1133,9 @@ function App() {
       let url;
       if (file) {
         try {
-          url = await uploadStoreImage(file, 900, 0.85);
+          url = await uploadStoreImage(file, 1200, 0.82);
         } catch {
-          url = await compressReceiptImage(file, 900, 0.85);
+          url = await compressReceiptImage(file, 1200, 0.82);
         }
       }
       const nextTexts = {

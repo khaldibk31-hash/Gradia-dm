@@ -479,6 +479,9 @@ ${lines}`,
                         {
                           src: item.universityLogo,
                           alt: "\u0634\u0639\u0627\u0631 \u0627\u0644\u062C\u0627\u0645\u0639\u0629 \u0627\u0644\u0645\u0631\u0641\u0642",
+                          referrerPolicy: "no-referrer",
+                          loading: "lazy",
+                          decoding: "async",
                           className: "w-7 h-7 rounded-full object-cover border border-[#5E1734] bg-white shrink-0"
                         }
                       ),
@@ -492,6 +495,9 @@ ${lines}`,
                         {
                           src: item.customModelImage,
                           alt: "\u0635\u0648\u0631\u0629 \u0627\u0644\u0645\u0648\u062F\u064A\u0644 \u0627\u0644\u0645\u0631\u0641\u0642\u0629",
+                          referrerPolicy: "no-referrer",
+                          loading: "lazy",
+                          decoding: "async",
                           className: "w-10 h-10 rounded-lg object-cover border border-[#5E1734]/40 bg-white shrink-0"
                         }
                       ),
@@ -998,6 +1004,9 @@ ${lines}`,
                       {
                         src: receiptImage,
                         alt: "\u0645\u0639\u0627\u064A\u0646\u0629 \u0635\u0648\u0631\u0629 \u0648\u0635\u0644 \u0627\u0644\u062F\u0641\u0639",
+                        referrerPolicy: "no-referrer",
+                        loading: "lazy",
+                        decoding: "async",
                         className: "w-16 h-16 rounded-xl object-cover border border-[#C6A355]/35 shrink-0 bg-white"
                       }
                     ),

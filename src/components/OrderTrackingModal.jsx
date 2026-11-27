@@ -452,6 +452,9 @@ function OrderTrackingModal({
                           {
                             src: item.university_logo,
                             alt: "\u0634\u0639\u0627\u0631 \u0627\u0644\u062C\u0627\u0645\u0639\u0629",
+                            referrerPolicy: "no-referrer",
+                            loading: "lazy",
+                            decoding: "async",
                             className: "w-6 h-6 rounded-full object-cover border border-[#C6A355]/45 bg-white"
                           }
                         ),
@@ -463,6 +466,9 @@ function OrderTrackingModal({
                           {
                             src: item.custom_model_image,
                             alt: "\u0635\u0648\u0631\u0629 \u0627\u0644\u0645\u0648\u062F\u064A\u0644 \u0627\u0644\u0645\u062E\u0635\u0635\u0629",
+                            referrerPolicy: "no-referrer",
+                            loading: "lazy",
+                            decoding: "async",
                             className: "w-8 h-8 rounded-lg object-cover border border-[#C6A355]/50 bg-white"
                           }
                         ),

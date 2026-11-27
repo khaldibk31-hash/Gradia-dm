@@ -17,6 +17,7 @@ import {
   SHAWL_MISS_IMAGE_PATH,
   SHAWL_REGULAR_IMAGE_PATH,
   createDefaultDeliveryPricing,
+  normalizeLegacyAssetPath,
   normalizeWhatsAppInput,
   sanitizeSocialUrl
 } from "../data/defaultStore";
@@ -43,7 +44,7 @@ function readCachedProducts() {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return null;
-    return parsed;
+    return parsed.map((p) => p && typeof p.imageUrl === "string" ? { ...p, imageUrl: normalizeLegacyAssetPath(p.imageUrl) } : p);
   } catch {
     return null;
   }
@@ -64,21 +65,21 @@ async function loadStoreState() {
     let loadedFromCloud = false;
     if (store) {
       if (store.logo_url) {
-        state.logoUrl = store.logo_url;
+        state.logoUrl = normalizeLegacyAssetPath(store.logo_url);
       }
       if (store.html_content && store.html_content.trim().startsWith("{")) {
         try {
           const parsed = JSON.parse(store.html_content);
           if (parsed && parsed.version === 2) {
             const loadedProducts = Array.isArray(parsed.products) ? parsed.products.map(
-              (p) => p.imageUrl && LEGACY_PINK_STOLE_IMAGE_MAP[p.imageUrl] ? { ...p, imageUrl: LEGACY_PINK_STOLE_IMAGE_MAP[p.imageUrl] } : p
+              (p) => p.imageUrl ? { ...p, imageUrl: normalizeLegacyAssetPath(p.imageUrl) } : p
             ) : DEFAULT_STORE_STATE.products;
             state = {
               ...DEFAULT_STORE_STATE,
               ...parsed,
               copy: { ...DEFAULT_STORE_STATE.copy, ...parsed.copy || {} },
               products: loadedProducts,
-              logoUrl: store.logo_url || parsed.logoUrl || ""
+              logoUrl: normalizeLegacyAssetPath(store.logo_url || parsed.logoUrl || "")
             };
             loadedFromCloud = true;
           }
@@ -230,7 +231,8 @@ function sanitizeCustomTexts(raw) {
   for (const [key, value] of Object.entries(raw)) {
     if (typeof key !== "string" || !key.trim()) continue;
     if (typeof value === "string") {
-      cleaned[key.trim()] = value;
+      const cleanKey = key.trim();
+      cleaned[cleanKey] = cleanKey.endsWith("imageUrl") || cleanKey.endsWith("Image") || cleanKey === "hero.coverImage" ? normalizeLegacyAssetPath(value) : value;
     }
   }
   return cleaned;
@@ -297,7 +299,7 @@ function sanitizeCategoryCoverImages(raw) {
   for (const cat of VALID_CATEGORY_IDS) {
     const val = record[cat];
     if (typeof val === "string" && val.trim().length > 0) {
-      cleaned[cat] = val.trim();
+      cleaned[cat] = normalizeLegacyAssetPath(val);
     }
   }
   return cleaned;
@@ -326,7 +328,7 @@ function sanitizeProductColorImages(raw) {
     )) {
       const cName = colorName.trim();
       if (cName && typeof url === "string" && url.trim().length > 0) {
-        perProduct[cName] = url.trim();
+        perProduct[cName] = normalizeLegacyAssetPath(url);
       }
     }
     if (Object.keys(perProduct).length > 0) {
@@ -581,7 +583,7 @@ function sanitizeShowcasePhotos(raw, fallback) {
   raw.forEach((item, index) => {
     if (!item || typeof item !== "object") return;
     const record = item;
-    const imageUrl = typeof record.imageUrl === "string" ? record.imageUrl.trim() : "";
+    const imageUrl = typeof record.imageUrl === "string" ? normalizeLegacyAssetPath(record.imageUrl) : "";
     if (!imageUrl) return;
     const caption = typeof record.caption === "string" ? record.caption.trim() : "";
     const wilaya = typeof record.wilaya === "string" ? record.wilaya.trim() : "";
@@ -683,7 +685,7 @@ function readCachedDynamicSettings() {
       showcaseSubtitle: typeof parsed.showcaseSubtitle === "string" ? parsed.showcaseSubtitle : void 0,
       heroTitle: typeof parsed.heroTitle === "string" && parsed.heroTitle.trim() ? parsed.heroTitle.trim() : void 0,
       heroSubtitle: typeof parsed.heroSubtitle === "string" && parsed.heroSubtitle.trim() ? parsed.heroSubtitle.trim() : void 0,
-      heroImageUrl: typeof parsed.heroImageUrl === "string" && parsed.heroImageUrl.trim() ? parsed.heroImageUrl.trim() : typeof parsed.customTexts?.["hero.coverImage"] === "string" && parsed.customTexts["hero.coverImage"].trim() ? parsed.customTexts["hero.coverImage"].trim() : void 0,
+      heroImageUrl: typeof parsed.heroImageUrl === "string" && parsed.heroImageUrl.trim() ? normalizeLegacyAssetPath(parsed.heroImageUrl) : typeof parsed.customTexts?.["hero.coverImage"] === "string" && parsed.customTexts["hero.coverImage"].trim() ? normalizeLegacyAssetPath(parsed.customTexts["hero.coverImage"]) : void 0,
       promoSettings: sanitizePromoSettings(
         parsed.promoSettings,
         DEFAULT_PROMO_SETTINGS
@@ -706,9 +708,9 @@ function readCachedDynamicSettings() {
       productColorImages: sanitizeProductColorImages(
         parsed.productColorImages && Object.keys(parsed.productColorImages).length > 0 ? parsed.productColorImages : parsed.customTexts?.["product.colorImages"]
       ),
-      americanShawlFrontImage: typeof parsed.americanShawlFrontImage === "string" && parsed.americanShawlFrontImage.trim() ? parsed.americanShawlFrontImage.trim() : typeof parsed.customTexts?.["americanShawl.frontImage"] === "string" && parsed.customTexts["americanShawl.frontImage"].trim() ? parsed.customTexts["americanShawl.frontImage"].trim() : void 0,
-      americanShawlBackImage: typeof parsed.americanShawlBackImage === "string" && parsed.americanShawlBackImage.trim() ? parsed.americanShawlBackImage.trim() : typeof parsed.customTexts?.["americanShawl.backImage"] === "string" && parsed.customTexts["americanShawl.backImage"].trim() ? parsed.customTexts["americanShawl.backImage"].trim() : void 0,
-      regularShawlBaseImage: typeof parsed.regularShawlBaseImage === "string" && parsed.regularShawlBaseImage.trim() ? parsed.regularShawlBaseImage.trim() : typeof parsed.customTexts?.["regularShawl.baseImage"] === "string" && parsed.customTexts["regularShawl.baseImage"].trim() ? parsed.customTexts["regularShawl.baseImage"].trim() : void 0,
+      americanShawlFrontImage: typeof parsed.americanShawlFrontImage === "string" && parsed.americanShawlFrontImage.trim() ? normalizeLegacyAssetPath(parsed.americanShawlFrontImage) : typeof parsed.customTexts?.["americanShawl.frontImage"] === "string" && parsed.customTexts["americanShawl.frontImage"].trim() ? normalizeLegacyAssetPath(parsed.customTexts["americanShawl.frontImage"]) : void 0,
+      americanShawlBackImage: typeof parsed.americanShawlBackImage === "string" && parsed.americanShawlBackImage.trim() ? normalizeLegacyAssetPath(parsed.americanShawlBackImage) : typeof parsed.customTexts?.["americanShawl.backImage"] === "string" && parsed.customTexts["americanShawl.backImage"].trim() ? normalizeLegacyAssetPath(parsed.customTexts["americanShawl.backImage"]) : void 0,
+      regularShawlBaseImage: typeof parsed.regularShawlBaseImage === "string" && parsed.regularShawlBaseImage.trim() ? normalizeLegacyAssetPath(parsed.regularShawlBaseImage) : typeof parsed.customTexts?.["regularShawl.baseImage"] === "string" && parsed.customTexts["regularShawl.baseImage"].trim() ? normalizeLegacyAssetPath(parsed.customTexts["regularShawl.baseImage"]) : void 0,
       deletedProductIds: sanitizeDeletedProductIds(
         parsed.deletedProductIds ?? parsed.customTexts?.["catalog.deletedIds"]
       ),
@@ -781,7 +783,7 @@ async function loadDynamicSettings(storeStateBackup) {
     showcaseSubtitle: typeof rawBase.showcaseSubtitle === "string" ? rawBase.showcaseSubtitle : void 0,
     heroTitle: typeof rawBase.heroTitle === "string" && rawBase.heroTitle.trim() ? rawBase.heroTitle.trim() : void 0,
     heroSubtitle: typeof rawBase.heroSubtitle === "string" && rawBase.heroSubtitle.trim() ? rawBase.heroSubtitle.trim() : void 0,
-    heroImageUrl: typeof rawBase.heroImageUrl === "string" && rawBase.heroImageUrl.trim() ? rawBase.heroImageUrl.trim() : typeof rawBase.customTexts?.["hero.coverImage"] === "string" && rawBase.customTexts["hero.coverImage"].trim() ? rawBase.customTexts["hero.coverImage"].trim() : void 0,
+    heroImageUrl: typeof rawBase.heroImageUrl === "string" && rawBase.heroImageUrl.trim() ? normalizeLegacyAssetPath(rawBase.heroImageUrl) : typeof rawBase.customTexts?.["hero.coverImage"] === "string" && rawBase.customTexts["hero.coverImage"].trim() ? normalizeLegacyAssetPath(rawBase.customTexts["hero.coverImage"]) : void 0,
     promoSettings: sanitizePromoSettings(
       rawBase.promoSettings,
       DEFAULT_PROMO_SETTINGS
@@ -804,9 +806,9 @@ async function loadDynamicSettings(storeStateBackup) {
     productColorImages: sanitizeProductColorImages(
       rawBase.productColorImages ?? cached?.productColorImages ?? rawBase.customTexts?.["product.colorImages"] ?? cached?.customTexts?.["product.colorImages"]
     ),
-    americanShawlFrontImage: typeof rawBase.americanShawlFrontImage === "string" && rawBase.americanShawlFrontImage.trim() ? rawBase.americanShawlFrontImage.trim() : typeof rawBase.customTexts?.["americanShawl.frontImage"] === "string" && rawBase.customTexts["americanShawl.frontImage"].trim() ? rawBase.customTexts["americanShawl.frontImage"].trim() : typeof cached?.americanShawlFrontImage === "string" && cached.americanShawlFrontImage.trim() ? cached.americanShawlFrontImage.trim() : void 0,
-    americanShawlBackImage: typeof rawBase.americanShawlBackImage === "string" && rawBase.americanShawlBackImage.trim() ? rawBase.americanShawlBackImage.trim() : typeof rawBase.customTexts?.["americanShawl.backImage"] === "string" && rawBase.customTexts["americanShawl.backImage"].trim() ? rawBase.customTexts["americanShawl.backImage"].trim() : typeof cached?.americanShawlBackImage === "string" && cached.americanShawlBackImage.trim() ? cached.americanShawlBackImage.trim() : void 0,
-    regularShawlBaseImage: typeof rawBase.regularShawlBaseImage === "string" && rawBase.regularShawlBaseImage.trim() ? rawBase.regularShawlBaseImage.trim() : typeof rawBase.customTexts?.["regularShawl.baseImage"] === "string" && rawBase.customTexts["regularShawl.baseImage"].trim() ? rawBase.customTexts["regularShawl.baseImage"].trim() : typeof cached?.regularShawlBaseImage === "string" && cached.regularShawlBaseImage.trim() ? cached.regularShawlBaseImage.trim() : void 0,
+    americanShawlFrontImage: typeof rawBase.americanShawlFrontImage === "string" && rawBase.americanShawlFrontImage.trim() ? normalizeLegacyAssetPath(rawBase.americanShawlFrontImage) : typeof rawBase.customTexts?.["americanShawl.frontImage"] === "string" && rawBase.customTexts["americanShawl.frontImage"].trim() ? normalizeLegacyAssetPath(rawBase.customTexts["americanShawl.frontImage"]) : typeof cached?.americanShawlFrontImage === "string" && cached.americanShawlFrontImage.trim() ? normalizeLegacyAssetPath(cached.americanShawlFrontImage) : void 0,
+    americanShawlBackImage: typeof rawBase.americanShawlBackImage === "string" && rawBase.americanShawlBackImage.trim() ? normalizeLegacyAssetPath(rawBase.americanShawlBackImage) : typeof rawBase.customTexts?.["americanShawl.backImage"] === "string" && rawBase.customTexts["americanShawl.backImage"].trim() ? normalizeLegacyAssetPath(rawBase.customTexts["americanShawl.backImage"]) : typeof cached?.americanShawlBackImage === "string" && cached.americanShawlBackImage.trim() ? normalizeLegacyAssetPath(cached.americanShawlBackImage) : void 0,
+    regularShawlBaseImage: typeof rawBase.regularShawlBaseImage === "string" && rawBase.regularShawlBaseImage.trim() ? normalizeLegacyAssetPath(rawBase.regularShawlBaseImage) : typeof rawBase.customTexts?.["regularShawl.baseImage"] === "string" && rawBase.customTexts["regularShawl.baseImage"].trim() ? normalizeLegacyAssetPath(rawBase.customTexts["regularShawl.baseImage"]) : typeof cached?.regularShawlBaseImage === "string" && cached.regularShawlBaseImage.trim() ? normalizeLegacyAssetPath(cached.regularShawlBaseImage) : void 0,
     deletedProductIds: sanitizeDeletedProductIds(
       rawBase.deletedProductIds ?? rawBase.customTexts?.["catalog.deletedIds"] ?? cached?.deletedProductIds ?? cached?.customTexts?.["catalog.deletedIds"]
     ),
@@ -1667,13 +1669,14 @@ async function sendTelegramTestMessage(botToken, chatId) {
     };
   }
 }
-async function loadOptimizedCanvas(file, maxDimension = 800) {
+async function loadOptimizedCanvas(file, maxDimension = 1200) {
   if (!file || !file.type || !file.type.startsWith("image/")) {
     throw new Error("\u064A\u0631\u062C\u0649 \u0627\u062E\u062A\u064A\u0627\u0631 \u0645\u0644\u0641 \u0635\u0648\u0631\u0629 \u0635\u0627\u0644\u062D (JPG / PNG / WebP).");
   }
   if (file.size > 15 * 1024 * 1024) {
     throw new Error("\u062D\u062C\u0645 \u0627\u0644\u0635\u0648\u0631\u0629 \u0643\u0628\u064A\u0631 \u062C\u062F\u0627\u064B. \u064A\u0631\u062C\u0649 \u0627\u062E\u062A\u064A\u0627\u0631 \u0635\u0648\u0631\u0629 \u0623\u0642\u0644 \u0645\u0646 15 \u0645\u064A\u063A\u0627\u0628\u0627\u064A\u062A.");
   }
+  const effectiveMaxDimension = Math.min(Math.max(1, Number(maxDimension) || 1200), 1200);
   const objectUrl = typeof URL !== "undefined" && typeof URL.createObjectURL === "function" ? URL.createObjectURL(file) : "";
   const img = await new Promise((resolve, reject) => {
     const imageEl = new Image();
@@ -1702,7 +1705,7 @@ async function loadOptimizedCanvas(file, maxDimension = 800) {
   const naturalW = img.naturalWidth || img.width || 1;
   const naturalH = img.naturalHeight || img.height || 1;
   const maxSide = Math.max(naturalW, naturalH, 1);
-  const ratio = Math.min(1, maxDimension / maxSide);
+  const ratio = Math.min(1, effectiveMaxDimension / maxSide);
   const canvas = document.createElement("canvas");
   canvas.width = Math.max(1, Math.round(naturalW * ratio));
   canvas.height = Math.max(1, Math.round(naturalH * ratio));
@@ -1740,28 +1743,32 @@ async function loadOptimizedCanvas(file, maxDimension = 800) {
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   return { canvas, hasTransparency: false };
 }
-async function compressReceiptImage(file, maxDimension = 800, quality = 0.8) {
-  const { canvas, hasTransparency } = await loadOptimizedCanvas(file, maxDimension);
-  const webpUrl = canvas.toDataURL("image/webp", quality);
+async function compressReceiptImage(file, maxDimension = 1200, quality = 0.82) {
+  const clampedMax = Math.min(Math.max(1, Number(maxDimension) || 1200), 1200);
+  const clampedQuality = Math.min(Math.max(0.4, Number(quality) || 0.82), 0.82);
+  const { canvas, hasTransparency } = await loadOptimizedCanvas(file, clampedMax);
+  const webpUrl = canvas.toDataURL("image/webp", clampedQuality);
   if (webpUrl.startsWith("data:image/webp")) {
     return webpUrl;
   }
   if (hasTransparency) {
     return canvas.toDataURL("image/png");
   }
-  return canvas.toDataURL("image/jpeg", quality);
+  return canvas.toDataURL("image/jpeg", clampedQuality);
 }
-async function uploadStoreImage(file, maxDimension = 800, quality = 0.8) {
-  const { canvas, hasTransparency } = await loadOptimizedCanvas(file, maxDimension);
+async function uploadStoreImage(file, maxDimension = 1200, quality = 0.82) {
+  const clampedMax = Math.min(Math.max(1, Number(maxDimension) || 1200), 1200);
+  const clampedQuality = Math.min(Math.max(0.4, Number(quality) || 0.82), 0.82);
+  const { canvas, hasTransparency } = await loadOptimizedCanvas(file, clampedMax);
   const toBlobAsync = (mime, q) => new Promise((resolve) => {
     canvas.toBlob((b) => resolve(b), mime, q);
   });
-  let blob = await toBlobAsync("image/webp", quality);
+  let blob = await toBlobAsync("image/webp", clampedQuality);
   if (!blob || blob.type !== "image/webp") {
     const fallbackMime = hasTransparency ? "image/png" : "image/jpeg";
     blob = await toBlobAsync(
       fallbackMime,
-      fallbackMime === "image/png" ? void 0 : quality
+      fallbackMime === "image/png" ? void 0 : clampedQuality
     );
   }
   if (!blob) {

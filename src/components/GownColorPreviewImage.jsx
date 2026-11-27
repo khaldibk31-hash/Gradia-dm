@@ -401,6 +401,7 @@ function renderRecoloredDataUrl(mask, colorHex, colorName) {
 }
 function GownColorPreviewImage({
   src,
+  fallbackSrc = "",
   alt,
   colorHex,
   colorName,
@@ -409,15 +410,22 @@ function GownColorPreviewImage({
   className = "",
   style
 }) {
+  const [primaryFailed, setPrimaryFailed] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const activeSrc = (!primaryFailed && src ? src : fallbackSrc) || src || fallbackSrc || "";
+  useEffect(() => {
+    setPrimaryFailed(false);
+    setImgLoaded(false);
+  }, [src, fallbackSrc]);
   const isDefaultBlack = isDefaultDarkGownColor(colorHex, colorName);
-  const isNonBlackBaseStole = garmentType === "stole" && src.includes("stole_back");
-  const shouldColorize = !isDisabled && (!isDefaultBlack || isNonBlackBaseStole) && Boolean(src);
-  const cacheKey = `${garmentType}::${src}::${colorHex.toLowerCase()}::${colorName}`;
+  const isNonBlackBaseStole = garmentType === "stole" && (activeSrc.includes("stole_back") || activeSrc.includes("stole-back"));
+  const shouldColorize = !isDisabled && (!isDefaultBlack || isNonBlackBaseStole) && Boolean(activeSrc);
+  const cacheKey = `${garmentType}::${activeSrc}::${colorHex.toLowerCase()}::${colorName}`;
   const localCacheRef = useRef(/* @__PURE__ */ new Map());
   const cachedSync = shouldColorize ? localCacheRef.current.get(cacheKey) || recoloredCache.get(cacheKey) || null : null;
   const [recoloredState, setRecoloredState] = useState(() => cachedSync ? { key: cacheKey, url: cachedSync } : null);
   useEffect(() => {
-    if (!shouldColorize) return;
+    if (!shouldColorize || !activeSrc) return;
     const hit = localCacheRef.current.get(cacheKey) || recoloredCache.get(cacheKey);
     if (hit) {
       localCacheRef.current.set(cacheKey, hit);
@@ -425,9 +433,14 @@ function GownColorPreviewImage({
       return;
     }
     let cancelled = false;
-    computeGarmentMask(src, garmentType).then((mask) => {
+    computeGarmentMask(activeSrc, garmentType).then((mask) => {
       if (cancelled) return;
-      if (!mask) return;
+      if (!mask) {
+        if (!primaryFailed && fallbackSrc && activeSrc !== fallbackSrc) {
+          setPrimaryFailed(true);
+        }
+        return;
+      }
       if (isDefaultBlack && mask.avgChroma < 22) return;
       const url = renderRecoloredDataUrl(mask, colorHex, colorName);
       if (url) {
@@ -440,18 +453,26 @@ function GownColorPreviewImage({
     return () => {
       cancelled = true;
     };
-  }, [src, colorHex, colorName, garmentType, cacheKey, shouldColorize, isDefaultBlack]);
+  }, [activeSrc, fallbackSrc, primaryFailed, colorHex, colorName, garmentType, cacheKey, shouldColorize, isDefaultBlack]);
   const resolvedUrl = cachedSync || (recoloredState?.key === cacheKey ? recoloredState.url : null);
   if (!shouldColorize || !resolvedUrl) {
     return /* @__PURE__ */ jsx(
       "img",
       {
-        src,
+        src: activeSrc,
         alt: shouldColorize ? `${alt} - ${colorName}` : alt,
         referrerPolicy: "no-referrer",
+        loading: "lazy",
+        decoding: "async",
         draggable: false,
+        onLoad: () => setImgLoaded(true),
+        onError: () => {
+          if (!primaryFailed && fallbackSrc && activeSrc !== fallbackSrc) {
+            setPrimaryFailed(true);
+          }
+        },
         onContextMenu: (e) => e.preventDefault(),
-        className,
+        className: `${className} transition-opacity duration-200 ${imgLoaded ? "opacity-100" : "opacity-90"}`,
         style
       }
     );
@@ -461,6 +482,9 @@ function GownColorPreviewImage({
     {
       src: resolvedUrl,
       alt: `${alt} - ${colorName}`,
+      referrerPolicy: "no-referrer",
+      loading: "lazy",
+      decoding: "async",
       draggable: false,
       onContextMenu: (e) => e.preventDefault(),
       className,

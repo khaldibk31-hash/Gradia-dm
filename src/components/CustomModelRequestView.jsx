@@ -310,6 +310,9 @@ function CustomModelRequestView({
             {
               src: modelImage,
               alt: "\u0645\u0639\u0627\u064A\u0646\u0629 \u0635\u0648\u0631\u0629 \u0627\u0644\u0645\u0648\u062F\u064A\u0644 \u0627\u0644\u0645\u0631\u0641\u0648\u0639\u0629",
+              referrerPolicy: "no-referrer",
+              loading: "lazy",
+              decoding: "async",
               className: "w-full h-full object-cover object-center p-0"
             }
           ) }),

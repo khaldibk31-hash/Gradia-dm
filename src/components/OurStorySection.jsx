@@ -89,6 +89,8 @@ function OurStorySection({
                   src: resolvedImageUrl,
                   alt: "\u0642\u0635\u0629 DG by Douaa",
                   referrerPolicy: "no-referrer",
+                  loading: "lazy",
+                  decoding: "async",
                   draggable: false,
                   onContextMenu: (e) => e.preventDefault(),
                   onError: () => setImgError(true),

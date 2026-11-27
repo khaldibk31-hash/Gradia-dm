@@ -15,7 +15,9 @@ import {
 } from "lucide-react";
 import {
   DEFAULT_SHOWCASE_PHOTOS,
-  HERO_BANNER_IMAGE_PATH
+  HERO_BANNER_IMAGE_PATH,
+  HERO_FALLBACK_SLIDES,
+  normalizeLegacyAssetPath
 } from "../data/defaultStore";
 import { compressReceiptImage, uploadStoreImage } from "../lib/supabase";
 import { EditableText, SectionHideButton, useStoreEdit } from "./EditableText";
@@ -65,6 +67,8 @@ function HeroSection({
   onNotify
 }) {
   const [failedSlideIds, setFailedSlideIds] = useState({});
+  const [fallbackFailedSlideIds, setFallbackFailedSlideIds] = useState({});
+  const [loadedSlideKeys, setLoadedSlideKeys] = useState({});
   const [activeSlide, setActiveSlide] = useState(0);
   const [isTouching, setIsTouching] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -78,12 +82,12 @@ function HeroSection({
   const touchStartRef = useRef(null);
   const { hiddenSections } = useStoreEdit();
   const isTrustBadgesHidden = Boolean(hiddenSections.trustBadges);
-  const resolvedPrimaryCoverUrl = heroImageUrl?.trim() || HERO_BANNER_IMAGE_PATH;
+  const resolvedPrimaryCoverUrl = normalizeLegacyAssetPath(heroImageUrl) || HERO_BANNER_IMAGE_PATH;
   const heroSlides = useMemo(() => {
     const seen = /* @__PURE__ */ new Set();
     const list = [];
     const pushUnique = (id, rawUrl, alt, isPrimary) => {
-      const clean = typeof rawUrl === "string" ? rawUrl.trim() : "";
+      const clean = normalizeLegacyAssetPath(rawUrl);
       if (!clean || seen.has(clean)) return;
       seen.add(clean);
       list.push({ id, url: clean, alt, isPrimary });
@@ -107,6 +111,7 @@ function HeroSection({
   const safeActiveSlide = heroSlides.length > 0 ? Math.min(activeSlide, heroSlides.length - 1) : 0;
   useEffect(() => {
     setFailedSlideIds({});
+    setFallbackFailedSlideIds({});
   }, [resolvedPrimaryCoverUrl]);
   useEffect(() => {
     if (!isAdminMode) {
@@ -155,9 +160,9 @@ function HeroSection({
   };
   const uploadOrCompressSlide = async (file) => {
     try {
-      return await uploadStoreImage(file, 1400, 0.85);
+      return await uploadStoreImage(file, 1200, 0.82);
     } catch {
-      return await compressReceiptImage(file, 1400, 0.85);
+      return await compressReceiptImage(file, 1200, 0.82);
     }
   };
   const handleAddGallerySlide = async (e) => {
@@ -403,26 +408,49 @@ function HeroSection({
               className: "absolute inset-0 flex h-full w-full transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform",
               style: { transform: `translateX(-${safeActiveSlide * 100}%)` },
               children: heroSlides.map((slide, idx) => {
+                const fallbackUrl = HERO_FALLBACK_SLIDES[idx % HERO_FALLBACK_SLIDES.length];
                 const hasError = Boolean(failedSlideIds[slide.id]);
-                return /* @__PURE__ */ jsx("div", { className: "relative w-full h-full shrink-0", children: !hasError ? /* @__PURE__ */ jsx(
-                  "img",
-                  {
-                    src: slide.url,
-                    alt: slide.alt,
-                    referrerPolicy: "no-referrer",
-                    loading: idx === 0 ? "eager" : "lazy",
-                    draggable: false,
-                    onContextMenu: (e) => e.preventDefault(),
-                    onError: () => setFailedSlideIds((prev) => ({ ...prev, [slide.id]: true })),
-                    className: `w-full h-full object-cover object-center block pointer-events-none select-none ${idx === safeActiveSlide ? "ken-burns" : ""}`
-                  }
-                ) : /* @__PURE__ */ jsx(
-                  "div",
-                  {
-                    "aria-hidden": "true",
-                    className: "w-full h-full bg-gradient-to-br from-[#5E1734] via-[#1A1617] to-[#170B11]"
-                  }
-                ) }, slide.id);
+                const imgSrc = hasError ? fallbackUrl : slide.url;
+                const bothFailed = Boolean(fallbackFailedSlideIds[slide.id]);
+                const slideLoadKey = `${slide.id}::${imgSrc}`;
+                const isSlideLoaded = Boolean(loadedSlideKeys[slideLoadKey]);
+                return /* @__PURE__ */ jsxs("div", { className: "relative w-full h-full shrink-0 overflow-hidden bg-[#1A1617]", children: [
+                  !bothFailed && !isSlideLoaded && /* @__PURE__ */ jsx(
+                    "div",
+                    {
+                      "aria-hidden": "true",
+                      className: "absolute inset-0 animate-pulse bg-gradient-to-br from-[#F4EFE6] via-[#FAF8F5] to-[#EFE6D5]"
+                    }
+                  ),
+                  !bothFailed ? /* @__PURE__ */ jsx(
+                    "img",
+                    {
+                      src: imgSrc,
+                      alt: slide.alt,
+                      referrerPolicy: "no-referrer",
+                      loading: idx === 0 ? "eager" : "lazy",
+                      decoding: idx === 0 ? "sync" : "async",
+                      fetchPriority: idx === 0 ? "high" : "auto",
+                      draggable: false,
+                      onContextMenu: (e) => e.preventDefault(),
+                      onLoad: () => setLoadedSlideKeys((prev) => prev[slideLoadKey] ? prev : { ...prev, [slideLoadKey]: true }),
+                      onError: () => {
+                        if (!hasError && slide.url !== fallbackUrl) {
+                          setFailedSlideIds((prev) => ({ ...prev, [slide.id]: true }));
+                        } else {
+                          setFallbackFailedSlideIds((prev) => ({ ...prev, [slide.id]: true }));
+                        }
+                      },
+                      className: `relative w-full h-full object-cover object-center block pointer-events-none select-none transition-opacity duration-300 ${isSlideLoaded ? "opacity-100" : "opacity-95"} ${idx === safeActiveSlide ? "ken-burns" : ""}`
+                    }
+                  ) : /* @__PURE__ */ jsx(
+                    "div",
+                    {
+                      "aria-hidden": "true",
+                      className: "w-full h-full bg-gradient-to-br from-[#5E1734] via-[#1A1617] to-[#170B11]"
+                    }
+                  )
+                ] }, slide.id);
               })
             }
           ),
@@ -596,9 +624,16 @@ function HeroSection({
                               /* @__PURE__ */ jsx(
                                 "img",
                                 {
-                                  src: slide.url,
+                                  src: failedSlideIds[slide.id] ? HERO_FALLBACK_SLIDES[idx % HERO_FALLBACK_SLIDES.length] : slide.url,
                                   alt: `\u0634\u0631\u064A\u062D\u0629 \u0627\u0644\u063A\u0644\u0627\u0641 ${idx + 1}`,
                                   referrerPolicy: "no-referrer",
+                                  loading: "lazy",
+                                  decoding: "async",
+                                  onError: () => {
+                                    if (!failedSlideIds[slide.id]) {
+                                      setFailedSlideIds((prev) => ({ ...prev, [slide.id]: true }));
+                                    }
+                                  },
                                   className: "w-full h-full object-cover object-center block"
                                 }
                               ),

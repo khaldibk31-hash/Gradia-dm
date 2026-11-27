@@ -34,7 +34,9 @@ import {
   SHAWL_REGULAR_IMAGE_PATH,
   THREAD_COLORS,
   WHATSAPP_NUMBER,
-  formatWhatsAppNumber
+  formatWhatsAppNumber,
+  getProductFallbackImage,
+  normalizeLegacyAssetPath
 } from "../data/defaultStore";
 import { compressReceiptImage } from "../lib/supabase";
 import { StoleCapLivePreview, exportStoleDesignCardPng } from "./StoleCapLivePreview";
@@ -348,6 +350,11 @@ function ProductDetailView({
   const [showGownSilhouette, setShowGownSilhouette] = useState(false);
   const [isDownloadingDesign, setIsDownloadingDesign] = useState(false);
   const [lightboxTarget, setLightboxTarget] = useState(null);
+  const [detailImgFailed, setDetailImgFailed] = useState(false);
+  const [detailImgLoaded, setDetailImgLoaded] = useState(false);
+  const [americanFrontFailed, setAmericanFrontFailed] = useState(false);
+  const [americanBackFailed, setAmericanBackFailed] = useState(false);
+  const [lightboxFailed, setLightboxFailed] = useState(false);
   const [uploadingAmericanSide, setUploadingAmericanSide] = useState(null);
   const [uploadingRegularBase, setUploadingRegularBase] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -655,16 +662,36 @@ function ProductDetailView({
     0,
     basePrice + capStyleSurcharge + mainColorSurcharge + threadColorSurcharge + capColorSurcharge + secondaryOptionSurcharge
   );
-  const activeImageUrl = isAmericanShawl ? americanShawlFrontImage || product.imageUrl : isFlowerProduct ? product.imageUrl : product.colorImages?.[selectedColor.name] || product.imageUrl;
-  const regularShawlColorizerImage = regularShawlBaseImage || SHAWL_REGULAR_IMAGE_PATH;
+  const fallbackProductImg = getProductFallbackImage(product);
+  const rawPrimaryDetailUrl = normalizeLegacyAssetPath(
+    isAmericanShawl ? americanShawlFrontImage || product.imageUrl : isFlowerProduct ? product.imageUrl : product.colorImages?.[selectedColor.name] || product.imageUrl
+  );
+  const activeImageUrl = (!detailImgFailed && rawPrimaryDetailUrl ? rawPrimaryDetailUrl : fallbackProductImg) || fallbackProductImg;
+  const regularShawlColorizerImage = normalizeLegacyAssetPath(regularShawlBaseImage) || SHAWL_REGULAR_IMAGE_PATH;
   const colorizerImageUrl = isRegularShawl && !product.colorImages?.[selectedColor.name] ? regularShawlColorizerImage : activeImageUrl;
-  const americanFrontImg = americanShawlFrontImage || product.imageUrl || SHAWL_AMERICAN_IMAGE_PATH;
-  const americanBackImg = americanShawlBackImage || SHAWL_BACK_IMAGE_PATH;
+  const rawAmericanFrontUrl = normalizeLegacyAssetPath(americanShawlFrontImage || product.imageUrl);
+  const rawAmericanBackUrl = normalizeLegacyAssetPath(americanShawlBackImage);
+  const americanFrontImg = (!americanFrontFailed && rawAmericanFrontUrl ? rawAmericanFrontUrl : SHAWL_AMERICAN_IMAGE_PATH) || SHAWL_AMERICAN_IMAGE_PATH;
+  const americanBackImg = (!americanBackFailed && rawAmericanBackUrl ? rawAmericanBackUrl : SHAWL_BACK_IMAGE_PATH) || SHAWL_BACK_IMAGE_PATH;
   const hasDedicatedColorImg = Boolean(product.colorImages?.[selectedColor.name]);
-  const dedicatedColorImgUrl = product.colorImages?.[selectedColor.name];
-  const hasRegularReferenceGallery = isRegularShawl && (Boolean(product.imageUrl && product.imageUrl !== regularShawlColorizerImage) || Boolean(
+  const dedicatedColorImgUrl = normalizeLegacyAssetPath(product.colorImages?.[selectedColor.name] || "");
+  const normalizedProductUrl = normalizeLegacyAssetPath(product.imageUrl);
+  const hasRegularReferenceGallery = isRegularShawl && (Boolean(normalizedProductUrl && normalizedProductUrl !== regularShawlColorizerImage) || Boolean(
     dedicatedColorImgUrl && dedicatedColorImgUrl !== regularShawlColorizerImage
   ));
+  useEffect(() => {
+    setDetailImgFailed(false);
+    setDetailImgLoaded(false);
+  }, [rawPrimaryDetailUrl, product.id]);
+  useEffect(() => {
+    setAmericanFrontFailed(false);
+  }, [rawAmericanFrontUrl]);
+  useEffect(() => {
+    setAmericanBackFailed(false);
+  }, [rawAmericanBackUrl]);
+  useEffect(() => {
+    setLightboxFailed(false);
+  }, [lightboxTarget?.url]);
   const handleColorFileChange = (e) => {
     const file = e.target.files?.item(0);
     if (file && onSetColorImage) {
@@ -1220,6 +1247,7 @@ function ProductDetailView({
                         GownColorPreviewImage,
                         {
                           src: colorizerImageUrl,
+                          fallbackSrc: fallbackProductImg,
                           alt: product.name,
                           colorHex: selectedColor.hex,
                           colorName: selectedColor.name,
@@ -1233,7 +1261,14 @@ function ProductDetailView({
                           src: activeImageUrl,
                           alt: product.name,
                           referrerPolicy: "no-referrer",
+                          loading: "lazy",
+                          decoding: "async",
                           draggable: false,
+                          onError: () => {
+                            if (!detailImgFailed && activeImageUrl !== fallbackProductImg) {
+                              setDetailImgFailed(true);
+                            }
+                          },
                           onContextMenu: (e) => e.preventDefault(),
                           className: "w-full h-full object-cover object-center p-0 mix-blend-multiply pointer-events-none select-none"
                         }
@@ -1322,6 +1357,7 @@ function ProductDetailView({
                     GownColorPreviewImage,
                     {
                       src: colorizerImageUrl,
+                      fallbackSrc: fallbackProductImg,
                       alt: product.name,
                       colorHex: selectedColor.hex,
                       colorName: selectedColor.name,
@@ -1330,18 +1366,35 @@ function ProductDetailView({
                       style: isBackShawl ? SEAMLESS_VIGNETTE_STYLE : void 0,
                       className: `w-full h-auto max-h-[480px] object-contain mx-auto block pointer-events-none select-none ${isBackShawl ? "mix-blend-multiply" : ""}`
                     }
-                  ) : /* @__PURE__ */ jsx(
-                    "img",
-                    {
-                      src: activeImageUrl,
-                      alt: product.name,
-                      referrerPolicy: "no-referrer",
-                      draggable: false,
-                      onContextMenu: (e) => e.preventDefault(),
-                      style: isBackShawl ? SEAMLESS_VIGNETTE_STYLE : void 0,
-                      className: "w-full h-auto max-h-[480px] object-contain mx-auto block mix-blend-multiply pointer-events-none select-none"
-                    }
-                  ),
+                  ) : /* @__PURE__ */ jsxs(Fragment, { children: [
+                    !detailImgLoaded && /* @__PURE__ */ jsx(
+                      "div",
+                      {
+                        "aria-hidden": "true",
+                        className: "absolute inset-0 animate-pulse bg-gradient-to-br from-[#F4EFE6] via-[#FAF8F5] to-[#EFE6D5]"
+                      }
+                    ),
+                    /* @__PURE__ */ jsx(
+                      "img",
+                      {
+                        src: activeImageUrl,
+                        alt: product.name,
+                        referrerPolicy: "no-referrer",
+                        loading: "lazy",
+                        decoding: "async",
+                        draggable: false,
+                        onLoad: () => setDetailImgLoaded(true),
+                        onError: () => {
+                          if (!detailImgFailed && activeImageUrl !== fallbackProductImg) {
+                            setDetailImgFailed(true);
+                          }
+                        },
+                        onContextMenu: (e) => e.preventDefault(),
+                        style: isBackShawl ? SEAMLESS_VIGNETTE_STYLE : void 0,
+                        className: `relative w-full h-auto max-h-[480px] object-contain mx-auto block mix-blend-multiply pointer-events-none select-none transition-opacity duration-300 ${detailImgLoaded ? "opacity-100" : "opacity-0"}`
+                      }
+                    )
+                  ] }),
                   /* @__PURE__ */ jsxs("span", { className: "pointer-events-none absolute bottom-3 left-3 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-sm border border-[#C6A355]/45 shadow-sm text-[11px] font-bold text-[#5E1734]", children: [
                     /* @__PURE__ */ jsx(ZoomIn, { className: "w-3.5 h-3.5 text-[#C6A355]" }),
                     /* @__PURE__ */ jsx("span", { children: "\u062A\u0643\u0628\u064A\u0631" })
@@ -1372,12 +1425,12 @@ function ProductDetailView({
               /* @__PURE__ */ jsx("span", { className: "text-[11px] font-semibold text-[#65525A]", children: "\u0627\u0636\u063A\u0637 \u0644\u0644\u062A\u0643\u0628\u064A\u0631" })
             ] }),
             /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-2 gap-2", children: [
-              product.imageUrl && product.imageUrl !== regularShawlColorizerImage && /* @__PURE__ */ jsxs(
+              normalizedProductUrl && normalizedProductUrl !== regularShawlColorizerImage && /* @__PURE__ */ jsxs(
                 "button",
                 {
                   type: "button",
                   onClick: () => openProductLightbox({
-                    url: product.imageUrl,
+                    url: normalizedProductUrl,
                     label: "\u0635\u0648\u0631\u0629 \u0627\u0644\u0645\u0648\u062F\u064A\u0644 \u0628\u0627\u0644\u062A\u0637\u0631\u064A\u0632 (\u0645\u0631\u062C\u0639)",
                     skipColorizer: true
                   }),
@@ -1387,9 +1440,11 @@ function ProductDetailView({
                     /* @__PURE__ */ jsx(
                       "img",
                       {
-                        src: product.imageUrl,
+                        src: normalizedProductUrl,
                         alt: `${product.name} - \u0645\u0631\u062C\u0639 \u0627\u0644\u062A\u0637\u0631\u064A\u0632`,
                         referrerPolicy: "no-referrer",
+                        loading: "lazy",
+                        decoding: "async",
                         draggable: false,
                         className: "w-12 h-14 rounded-lg object-cover border border-[#C6A355]/20 shrink-0 pointer-events-none select-none"
                       }
@@ -1401,7 +1456,7 @@ function ProductDetailView({
                   ]
                 }
               ),
-              dedicatedColorImgUrl && dedicatedColorImgUrl !== regularShawlColorizerImage && dedicatedColorImgUrl !== product.imageUrl && /* @__PURE__ */ jsxs(
+              dedicatedColorImgUrl && dedicatedColorImgUrl !== regularShawlColorizerImage && dedicatedColorImgUrl !== normalizedProductUrl && /* @__PURE__ */ jsxs(
                 "button",
                 {
                   type: "button",
@@ -1419,6 +1474,8 @@ function ProductDetailView({
                         src: dedicatedColorImgUrl,
                         alt: `${product.name} - ${selectedColor.name}`,
                         referrerPolicy: "no-referrer",
+                        loading: "lazy",
+                        decoding: "async",
                         draggable: false,
                         className: "w-12 h-14 rounded-lg object-cover border border-[#C6A355]/20 shrink-0 pointer-events-none select-none"
                       }
@@ -1520,7 +1577,14 @@ function ProductDetailView({
                     src: americanFrontImg,
                     alt: `${product.name} - \u0645\u0646 \u0627\u0644\u0623\u0645\u0627\u0645`,
                     referrerPolicy: "no-referrer",
+                    loading: "lazy",
+                    decoding: "async",
                     draggable: false,
+                    onError: () => {
+                      if (!americanFrontFailed && americanFrontImg !== SHAWL_AMERICAN_IMAGE_PATH) {
+                        setAmericanFrontFailed(true);
+                      }
+                    },
                     onContextMenu: (e) => e.preventDefault(),
                     style: SEAMLESS_VIGNETTE_STYLE,
                     className: "w-full h-auto max-h-[480px] object-contain mx-auto block mix-blend-multiply transition-transform duration-300 group-hover:scale-[1.02] pointer-events-none select-none"
@@ -1559,7 +1623,14 @@ function ProductDetailView({
                     src: americanBackImg,
                     alt: `${product.name} - \u0645\u0646 \u0627\u0644\u062E\u0644\u0641`,
                     referrerPolicy: "no-referrer",
+                    loading: "lazy",
+                    decoding: "async",
                     draggable: false,
+                    onError: () => {
+                      if (!americanBackFailed && americanBackImg !== SHAWL_BACK_IMAGE_PATH) {
+                        setAmericanBackFailed(true);
+                      }
+                    },
                     onContextMenu: (e) => e.preventDefault(),
                     style: SEAMLESS_VIGNETTE_STYLE,
                     className: "w-full h-auto max-h-[480px] object-contain mx-auto block mix-blend-multiply transition-transform duration-300 group-hover:scale-[1.02] pointer-events-none select-none"
@@ -1641,6 +1712,7 @@ function ProductDetailView({
                 GownColorPreviewImage,
                 {
                   src: activeImageUrl,
+                  fallbackSrc: fallbackProductImg,
                   alt: product.name,
                   colorHex: selectedColor.hex,
                   colorName: selectedColor.name,
@@ -1649,18 +1721,35 @@ function ProductDetailView({
                   style: isBackShawl ? SEAMLESS_VIGNETTE_STYLE : void 0,
                   className: `w-full h-auto max-h-[480px] object-contain mx-auto block pointer-events-none select-none ${isBackShawl ? "mix-blend-multiply" : ""}`
                 }
-              ) : /* @__PURE__ */ jsx(
-                "img",
-                {
-                  src: activeImageUrl,
-                  alt: product.name,
-                  referrerPolicy: "no-referrer",
-                  draggable: false,
-                  onContextMenu: (e) => e.preventDefault(),
-                  style: isBackShawl ? SEAMLESS_VIGNETTE_STYLE : void 0,
-                  className: "w-full h-auto max-h-[480px] object-contain mx-auto block mix-blend-multiply pointer-events-none select-none"
-                }
-              ),
+              ) : /* @__PURE__ */ jsxs(Fragment, { children: [
+                !detailImgLoaded && /* @__PURE__ */ jsx(
+                  "div",
+                  {
+                    "aria-hidden": "true",
+                    className: "absolute inset-0 animate-pulse bg-gradient-to-br from-[#F4EFE6] via-[#FAF8F5] to-[#EFE6D5]"
+                  }
+                ),
+                /* @__PURE__ */ jsx(
+                  "img",
+                  {
+                    src: activeImageUrl,
+                    alt: product.name,
+                    referrerPolicy: "no-referrer",
+                    loading: "lazy",
+                    decoding: "async",
+                    draggable: false,
+                    onLoad: () => setDetailImgLoaded(true),
+                    onError: () => {
+                      if (!detailImgFailed && activeImageUrl !== fallbackProductImg) {
+                        setDetailImgFailed(true);
+                      }
+                    },
+                    onContextMenu: (e) => e.preventDefault(),
+                    style: isBackShawl ? SEAMLESS_VIGNETTE_STYLE : void 0,
+                    className: `relative w-full h-auto max-h-[480px] object-contain mx-auto block mix-blend-multiply pointer-events-none select-none transition-opacity duration-300 ${detailImgLoaded ? "opacity-100" : "opacity-0"}`
+                  }
+                )
+              ] }),
               /* @__PURE__ */ jsxs("span", { className: "pointer-events-none absolute bottom-3 left-3 z-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-sm border border-[#C6A355]/45 shadow-sm text-[11px] font-bold text-[#5E1734]", children: [
                 /* @__PURE__ */ jsx(ZoomIn, { className: "w-3.5 h-3.5 text-[#C6A355]" }),
                 /* @__PURE__ */ jsx("span", { children: "\u062A\u0643\u0628\u064A\u0631" })
@@ -2689,6 +2778,9 @@ function ProductDetailView({
                     {
                       src: regularShawlColorizerImage,
                       alt: "\u0635\u0648\u0631\u0629 \u0627\u0644\u0634\u0627\u0644 \u0627\u0644\u0623\u0633\u0648\u062F \u0627\u0644\u0633\u0627\u062F\u0629 \u0644\u0644\u062A\u0644\u0648\u064A\u0646",
+                      referrerPolicy: "no-referrer",
+                      loading: "lazy",
+                      decoding: "async",
                       className: "w-9 h-9 rounded-lg object-cover border border-[#C6A355]/40 bg-white shrink-0"
                     }
                   ),
@@ -2882,6 +2974,9 @@ function ProductDetailView({
                     {
                       src: universityLogo,
                       alt: "\u0634\u0639\u0627\u0631 \u0627\u0644\u062C\u0627\u0645\u0639\u0629 \u0627\u0644\u0645\u0631\u0641\u0642",
+                      referrerPolicy: "no-referrer",
+                      loading: "lazy",
+                      decoding: "async",
                       className: "w-11 h-11 rounded-full object-cover border-2 border-[#5E1734] bg-white shrink-0"
                     }
                   ),
@@ -3040,7 +3135,9 @@ function ProductDetailView({
                             {
                               src: capImgSrc,
                               alt: cap.label,
+                              referrerPolicy: "no-referrer",
                               loading: "lazy",
+                              decoding: "async",
                               draggable: false,
                               onContextMenu: (e) => e.preventDefault(),
                               className: "w-10 h-10 rounded-lg object-cover shrink-0 pointer-events-none select-none"
@@ -3386,6 +3483,7 @@ function ProductDetailView({
                           GownColorPreviewImage,
                           {
                             src: lightboxTarget.url,
+                            fallbackSrc: fallbackProductImg,
                             alt: product.name,
                             colorHex: selectedColor.hex,
                             colorName: selectedColor.name,
@@ -3396,10 +3494,16 @@ function ProductDetailView({
                         ) : /* @__PURE__ */ jsx(
                           "img",
                           {
-                            src: lightboxTarget.url,
+                            src: (!lightboxFailed ? lightboxTarget.url : fallbackProductImg) || fallbackProductImg,
                             alt: lightboxTarget.label ? `${product.name} - ${lightboxTarget.label}` : product.name,
                             referrerPolicy: "no-referrer",
+                            decoding: "async",
                             draggable: false,
+                            onError: () => {
+                              if (!lightboxFailed && lightboxTarget.url !== fallbackProductImg) {
+                                setLightboxFailed(true);
+                              }
+                            },
                             onContextMenu: (e) => e.preventDefault(),
                             className: "max-w-full max-h-[72vh] w-auto h-auto object-contain mx-auto block mix-blend-multiply pointer-events-none select-none"
                           }
@@ -3449,15 +3553,26 @@ function SectionCard({
   onRemoveImage
 }) {
   const [imgError, setImgError] = useState(false);
+  const [fallbackImgError, setFallbackImgError] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [editingPrice, setEditingPrice] = useState(false);
   const [priceDraft, setPriceDraft] = useState(String(product.basePrice));
   const [savingPrice, setSavingPrice] = useState(false);
   const fileInputRef = useRef(null);
+  const normalizedCustomUrl = normalizeLegacyAssetPath(product.imageUrl);
+  const fallbackImgUrl = getProductFallbackImage(product);
+  useEffect(() => {
+    setImgError(false);
+    setFallbackImgError(false);
+    setImgLoaded(false);
+  }, [normalizedCustomUrl]);
   const handleImageChange = (e) => {
     const file = e.target.files?.item(0);
     if (file) {
       setImgError(false);
+      setFallbackImgError(false);
+      setImgLoaded(false);
       onReplaceImage(file);
       e.target.value = "";
     }
@@ -3489,7 +3604,9 @@ function SectionCard({
       setSavingPrice(false);
     }
   };
-  const hasValidImage = Boolean(product.imageUrl) && !imgError;
+  const hasValidImage = Boolean(normalizedCustomUrl) && !imgError;
+  const resolvedCardImg = hasValidImage ? normalizedCustomUrl : fallbackImgUrl;
+  const canRenderCardImage = Boolean(resolvedCardImg) && !fallbackImgError;
   const discountedBasePrice = storewideDiscountPercent > 0 ? Math.max(0, Math.round(product.basePrice * (1 - storewideDiscountPercent / 100))) : product.basePrice;
   if (layout === "horizontal") {
     return /* @__PURE__ */ jsxs(
@@ -3702,17 +3819,34 @@ function SectionCard({
               style: { backgroundColor: imageBgColor || "#FFFFFF" },
               className: "relative w-36 sm:w-44 min-h-[155px] shrink-0 self-stretch overflow-hidden p-0 border-0 rounded-none flex items-center justify-center protected-media select-none transition-colors duration-300",
               children: [
-                hasValidImage ? /* @__PURE__ */ jsxs(Fragment, { children: [
+                canRenderCardImage ? /* @__PURE__ */ jsxs(Fragment, { children: [
+                  !imgLoaded && /* @__PURE__ */ jsx(
+                    "div",
+                    {
+                      "aria-hidden": "true",
+                      className: "absolute inset-0 animate-pulse bg-gradient-to-br from-[#F4EFE6] via-[#FAF8F5] to-[#EFE6D5]"
+                    }
+                  ),
                   /* @__PURE__ */ jsx(
                     "img",
                     {
-                      src: product.imageUrl,
+                      src: resolvedCardImg,
                       alt: product.name,
                       referrerPolicy: "no-referrer",
+                      loading: "lazy",
+                      decoding: "async",
                       draggable: false,
                       onContextMenu: (e) => e.preventDefault(),
-                      onError: () => setImgError(true),
-                      className: "w-full h-full object-cover object-center p-0 mix-blend-multiply transition-transform duration-300 group-hover:scale-[1.03] pointer-events-none select-none"
+                      onLoad: () => setImgLoaded(true),
+                      onError: () => {
+                        if (hasValidImage && resolvedCardImg !== fallbackImgUrl) {
+                          setImgError(true);
+                          setImgLoaded(false);
+                        } else {
+                          setFallbackImgError(true);
+                        }
+                      },
+                      className: `relative w-full h-full object-cover object-center p-0 mix-blend-multiply transition-all duration-300 group-hover:scale-[1.03] pointer-events-none select-none ${imgLoaded ? "opacity-100" : "opacity-0"}`
                     }
                   ),
                   /* @__PURE__ */ jsx(
@@ -3773,7 +3907,7 @@ function SectionCard({
                     ]
                   }
                 ),
-                hasValidImage && onZoomImage && /* @__PURE__ */ jsx(
+                canRenderCardImage && onZoomImage && /* @__PURE__ */ jsx(
                   "button",
                   {
                     type: "button",
@@ -3815,17 +3949,34 @@ function SectionCard({
             style: { backgroundColor: imageBgColor || "#FFFFFF" },
             className: "relative h-72 sm:h-80 w-full overflow-hidden p-0 border-0 flex items-center justify-center protected-media select-none transition-colors duration-300",
             children: [
-              hasValidImage ? /* @__PURE__ */ jsxs(Fragment, { children: [
+              canRenderCardImage ? /* @__PURE__ */ jsxs(Fragment, { children: [
+                !imgLoaded && /* @__PURE__ */ jsx(
+                  "div",
+                  {
+                    "aria-hidden": "true",
+                    className: "absolute inset-0 animate-pulse bg-gradient-to-br from-[#F4EFE6] via-[#FAF8F5] to-[#EFE6D5]"
+                  }
+                ),
                 /* @__PURE__ */ jsx(
                   "img",
                   {
-                    src: product.imageUrl,
+                    src: resolvedCardImg,
                     alt: product.name,
                     referrerPolicy: "no-referrer",
+                    loading: "lazy",
+                    decoding: "async",
                     draggable: false,
                     onContextMenu: (e) => e.preventDefault(),
-                    onError: () => setImgError(true),
-                    className: "w-full h-full object-cover object-center p-0 mix-blend-multiply transition-transform duration-300 group-hover:scale-[1.03] pointer-events-none select-none"
+                    onLoad: () => setImgLoaded(true),
+                    onError: () => {
+                      if (hasValidImage && resolvedCardImg !== fallbackImgUrl) {
+                        setImgError(true);
+                        setImgLoaded(false);
+                      } else {
+                        setFallbackImgError(true);
+                      }
+                    },
+                    className: `relative w-full h-full object-cover object-center p-0 mix-blend-multiply transition-all duration-300 group-hover:scale-[1.03] pointer-events-none select-none ${imgLoaded ? "opacity-100" : "opacity-0"}`
                   }
                 ),
                 /* @__PURE__ */ jsx(
@@ -4160,6 +4311,8 @@ function ProductCatalog({
   const [addingBranchOpen, setAddingBranchOpen] = useState(false);
   const [newBranchName, setNewBranchName] = useState("");
   const [uploadingCategoryCover, setUploadingCategoryCover] = useState(null);
+  const [loadedCatCoverKeys, setLoadedCatCoverKeys] = useState({});
+  const [failedCatCoverUrls, setFailedCatCoverUrls] = useState({});
   const getCategoryImageBg = (category) => categoryImageBgColors?.[category] || "#FAF8F5";
   const catalogSectionRef = useRef(null);
   const selectedSectionRef = useRef(selectedSection);
@@ -4849,11 +5002,11 @@ function ProductCatalog({
                       imageBgColor: getCategoryImageBg(product.category),
                       layout: selectedSection === "shawl" ? "horizontal" : "vertical",
                       onSelect: () => handleOpenProduct(product.id),
-                      onZoomImage: product.imageUrl ? () => openCardLightbox({
-                        url: product.imageUrl,
+                      onZoomImage: () => openCardLightbox({
+                        url: normalizeLegacyAssetPath(product.imageUrl) || getProductFallbackImage(product),
                         title: product.name,
                         bgColor: getCategoryImageBg(product.category)
-                      }) : void 0,
+                      }),
                       onEdit: () => onEditProduct(product),
                       onDelete: () => onDeleteProduct(product.id),
                       onUpdatePrice: (nextPrice) => onUpdateProductPrice?.(product.id, nextPrice),
@@ -4958,7 +5111,11 @@ function ProductCatalog({
                 const firstProdWithImg = products.find(
                   (p) => p.category === sec.id && p.imageUrl
                 );
-                const coverImg = categoryCoverImages?.[sec.id] || firstProdWithImg?.imageUrl || sec.fallbackImg;
+                const rawCoverImg = normalizeLegacyAssetPath(categoryCoverImages?.[sec.id]) || normalizeLegacyAssetPath(firstProdWithImg?.imageUrl) || sec.fallbackImg;
+                const hasCatCoverFailed = failedCatCoverUrls[sec.id] === rawCoverImg;
+                const coverImg = hasCatCoverFailed ? sec.fallbackImg : rawCoverImg;
+                const catCoverKey = `${sec.id}::${coverImg}`;
+                const isCatCoverLoaded = Boolean(loadedCatCoverKeys[catCoverKey]);
                 const bgColor = getCategoryImageBg(sec.id);
                 const paused = isCategoryPaused(sec.id);
                 const isCustomBg = !CATEGORY_IMAGE_BG_PRESETS.some(
@@ -4989,15 +5146,30 @@ function ProductCatalog({
                             },
                             className: "relative flex-1 h-full min-h-[180px] md:flex-none md:h-56 w-full overflow-hidden p-0 border-0 flex items-center justify-center protected-media select-none transition-colors duration-300",
                             children: [
+                              !isCatCoverLoaded && /* @__PURE__ */ jsx(
+                                "div",
+                                {
+                                  "aria-hidden": "true",
+                                  className: "absolute inset-0 animate-pulse bg-gradient-to-br from-[#F4EFE6] via-[#FAF8F5] to-[#EFE6D5]"
+                                }
+                              ),
                               /* @__PURE__ */ jsx(
                                 "img",
                                 {
                                   src: coverImg,
                                   alt: sec.title,
                                   referrerPolicy: "no-referrer",
+                                  loading: "lazy",
+                                  decoding: "async",
                                   draggable: false,
+                                  onLoad: () => setLoadedCatCoverKeys((prev) => prev[catCoverKey] ? prev : { ...prev, [catCoverKey]: true }),
+                                  onError: () => {
+                                    if (!hasCatCoverFailed && rawCoverImg !== sec.fallbackImg) {
+                                      setFailedCatCoverUrls((prev) => ({ ...prev, [sec.id]: rawCoverImg }));
+                                    }
+                                  },
                                   onContextMenu: (e) => e.preventDefault(),
-                                  className: `w-full h-full object-cover object-center p-0 mix-blend-multiply transition-transform duration-300 group-hover:scale-[1.03] pointer-events-none select-none ${paused ? "opacity-85" : ""}`
+                                  className: `relative w-full h-full object-cover object-center p-0 mix-blend-multiply transition-all duration-300 group-hover:scale-[1.03] pointer-events-none select-none ${isCatCoverLoaded ? paused ? "opacity-85" : "opacity-100" : "opacity-0"}`
                                 }
                               ),
                               /* @__PURE__ */ jsx(
@@ -5260,6 +5432,7 @@ function ProductCatalog({
                             src: cardLightbox.url,
                             alt: cardLightbox.title,
                             referrerPolicy: "no-referrer",
+                            decoding: "async",
                             draggable: false,
                             onContextMenu: (e) => e.preventDefault(),
                             className: "max-w-full max-h-[72vh] w-auto h-auto object-contain mx-auto block mix-blend-multiply pointer-events-none select-none"

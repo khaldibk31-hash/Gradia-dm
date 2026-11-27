@@ -37,18 +37,80 @@ function sanitizeSocialUrl(raw) {
   }
 }
 const BRAND_LOGO_PATH = "/assets/aistudio/Messenger_creation_1E2398F0-575A-4054-A762-C6E5FA028C9C_533e43e0.jpeg";
-const HERO_IMAGE_PATH = "/src/assets/images/hero_graduation_atelier_1794839417274.jpg";
-const HERO_BANNER_IMAGE_PATH = "/src/assets/images/hero_modest_graduation_celebration_1795535481621.jpg";
-const HERO_BLACK_GOLD_IMAGE_PATH = "/src/assets/images/hero_luxury_black_gold_graduation_1795452074554.jpg";
-const SHAWL_MISS_IMAGE_PATH = "/src/assets/images/stole_miss_ivory_1795608463033.jpg";
-const SHAWL_REGULAR_IMAGE_PATH = "/src/assets/images/stole_regular_ivory_1795608463680.jpg";
-const SHAWL_BACK_IMAGE_PATH = "/src/assets/images/stole_back_ivory_1795608465248.jpg";
-const SHAWL_CRYSTAL_ROYAL_IMAGE_PATH = "/assets/aistudio/85f05e65-0c65-4ea0-9f61-27a1476a0e67_b3e9eb90.png";
-const SHAWL_AMERICAN_IMAGE_PATH = "/src/assets/images/stole_american_ivory_1795608465114.jpg";
+const HERO_IMAGE_PATH = "/images/hero-ivory.webp";
+const HERO_BANNER_IMAGE_PATH = "/images/hero-burgundy.webp";
+const HERO_BLACK_GOLD_IMAGE_PATH = "/images/hero-gold.webp";
+const HERO_ATELIER_IMAGE_PATH = "/images/hero-atelier.webp";
+const HERO_FALLBACK_SLIDES = [
+  HERO_BANNER_IMAGE_PATH,
+  HERO_IMAGE_PATH,
+  HERO_BLACK_GOLD_IMAGE_PATH
+];
+const SHAWL_MISS_IMAGE_PATH = "/images/stole-miss.webp";
+const SHAWL_REGULAR_IMAGE_PATH = "/images/stole-regular.webp";
+const SHAWL_BACK_IMAGE_PATH = "/images/stole-back.webp";
+const SHAWL_CRYSTAL_ROYAL_IMAGE_PATH = "/images/stole-crystal-royal.webp";
+const SHAWL_AMERICAN_IMAGE_PATH = "/images/stole-american.webp";
 const SHAWL_IMAGE_PATH = SHAWL_MISS_IMAGE_PATH;
-const ROBE_IMAGE_PATH = "/src/assets/images/product_graduation_robe_1794839418964.jpg";
-const CAP_IMAGE_PATH = "/src/assets/images/product_graduation_cap_1794839419964.jpg";
-const BOUQUET_IMAGE_PATH = "/src/assets/images/product_graduation_bouquet_1794839419713.jpg";
+const ROBE_IMAGE_PATH = "/images/robe.webp";
+const CAP_IMAGE_PATH = "/images/cap.webp";
+const BOUQUET_IMAGE_PATH = "/images/bouquet.webp";
+const LEGACY_ASSET_PATH_MAP = {
+  "/src/assets/images/hero_graduation_atelier_1794839417274.jpg": HERO_ATELIER_IMAGE_PATH,
+  "/src/assets/images/hero_modest_graduation_celebration_1795535481621.jpg": HERO_BANNER_IMAGE_PATH,
+  "/src/assets/images/hero_luxury_black_gold_graduation_1795452074554.jpg": HERO_BLACK_GOLD_IMAGE_PATH,
+  "/src/assets/images/stole_miss_ivory_1795608463033.jpg": SHAWL_MISS_IMAGE_PATH,
+  "/src/assets/images/stole_regular_ivory_1795608463680.jpg": SHAWL_REGULAR_IMAGE_PATH,
+  "/src/assets/images/stole_back_ivory_1795608465248.jpg": SHAWL_BACK_IMAGE_PATH,
+  "/src/assets/images/stole_american_ivory_1795608465114.jpg": SHAWL_AMERICAN_IMAGE_PATH,
+  "/src/assets/images/product_graduation_robe_1794839418964.jpg": ROBE_IMAGE_PATH,
+  "/src/assets/images/product_graduation_cap_1794839419964.jpg": CAP_IMAGE_PATH,
+  "/src/assets/images/product_graduation_bouquet_1794839419713.jpg": BOUQUET_IMAGE_PATH,
+  "/src/assets/images/product_shawl_miss_1794839418538.jpg": SHAWL_MISS_IMAGE_PATH,
+  "/assets/aistudio/85f05e65-0c65-4ea0-9f61-27a1476a0e67_b3e9eb90.png": SHAWL_CRYSTAL_ROYAL_IMAGE_PATH,
+  "https://gzkllcoypsldbdixeact.supabase.co/storage/v1/object/public/store-images/store/1795111268510-309f6vu.jpg": SHAWL_MISS_IMAGE_PATH,
+  "https://gzkllcoypsldbdixeact.supabase.co/storage/v1/object/public/store-images/store/1795112672794-hzxbwr9.jpg": SHAWL_REGULAR_IMAGE_PATH,
+  "https://gzkllcoypsldbdixeact.supabase.co/storage/v1/object/public/store-images/store/1795068430085-fa6ifif.jpg": SHAWL_BACK_IMAGE_PATH,
+  "https://gzkllcoypsldbdixeact.supabase.co/storage/v1/object/public/store-images/store/1795368961005-nxiodzh.jpg": SHAWL_AMERICAN_IMAGE_PATH
+};
+function normalizeLegacyAssetPath(rawUrl) {
+  if (typeof rawUrl !== "string") return "";
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return "";
+  return LEGACY_ASSET_PATH_MAP[trimmed] || trimmed;
+}
+function getProductFallbackImage(productOrCategory) {
+  if (!productOrCategory) return SHAWL_BACK_IMAGE_PATH;
+  if (typeof productOrCategory === "string") {
+    if (productOrCategory === "robe") return ROBE_IMAGE_PATH;
+    if (productOrCategory === "cap") return CAP_IMAGE_PATH;
+    if (productOrCategory === "accessories") return BOUQUET_IMAGE_PATH;
+    return SHAWL_BACK_IMAGE_PATH;
+  }
+  const id = String(productOrCategory.id || "");
+  const name = String(productOrCategory.name || "");
+  const branch = String(productOrCategory.branch || "");
+  const category = String(productOrCategory.category || "");
+  if (id === "shawl-crystal-royal-1" || name.includes("\u0643\u0631\u064A\u0633\u062A\u0627\u0644") || branch.includes("\u0643\u0631\u064A\u0633\u062A\u0627\u0644")) {
+    return SHAWL_CRYSTAL_ROYAL_IMAGE_PATH;
+  }
+  if (id === "shawl-back-1" || name.includes("\u0628\u0627\u0644\u0638\u0647\u0631") || branch.includes("\u0628\u0627\u0644\u0638\u0647\u0631")) {
+    return SHAWL_BACK_IMAGE_PATH;
+  }
+  if (id === "shawl-american-1" || name.includes("\u0627\u0645\u0631\u064A\u0643\u064A") || name.includes("\u0623\u0645\u0631\u064A\u0643\u064A") || branch.includes("\u0627\u0645\u0631\u064A\u0643\u064A") || branch.includes("\u0623\u0645\u0631\u064A\u0643\u064A")) {
+    return SHAWL_AMERICAN_IMAGE_PATH;
+  }
+  if (id === "shawl-regular-1" || category === "shawl" && (name.includes("\u0639\u0627\u062F\u064A") || branch.includes("\u0639\u0627\u062F\u064A"))) {
+    return SHAWL_REGULAR_IMAGE_PATH;
+  }
+  if (id === "shawl-miss-1" || name.includes("\u0645\u064A\u0633") || branch.includes("\u0645\u064A\u0633")) {
+    return SHAWL_MISS_IMAGE_PATH;
+  }
+  if (category === "robe") return ROBE_IMAGE_PATH;
+  if (category === "cap") return CAP_IMAGE_PATH;
+  if (category === "accessories") return BOUQUET_IMAGE_PATH;
+  return SHAWL_BACK_IMAGE_PATH;
+}
 const DEFAULT_PAUSE_MESSAGE = "\u0646\u0639\u062A\u0630\u0631 \u0645\u0646\u0643\u0645\u060C \u062A\u0645 \u0625\u064A\u0642\u0627\u0641 \u0627\u0633\u062A\u0642\u0628\u0627\u0644 \u0627\u0644\u0637\u0644\u0628\u064A\u0627\u062A \u0645\u0624\u0642\u062A\u0627\u064B \u0646\u0638\u0631\u0627\u064B \u0644\u0636\u063A\u0637 \u0627\u0644\u0637\u0644\u0628\u0627\u062A \u0627\u0644\u0643\u0628\u064A\u0631. \u0633\u0646\u0639\u0648\u062F \u0644\u0627\u0633\u062A\u0642\u0628\u0627\u0644 \u0637\u0644\u0628\u0627\u062A\u0643\u0645 \u0642\u0631\u064A\u0628\u0627\u064B!";
 const DEFAULT_CATEGORY_PAUSE_BADGE = "\u064A\u062A\u0648\u0641\u0631 \u0642\u0631\u064A\u0628\u0627\u064B";
 const DEFAULT_PAYMENT_INFO = "\u064A\u0645\u0643\u0646\u0643 \u062A\u062D\u0648\u064A\u0644 \u0627\u0644\u0639\u0631\u0628\u0648\u0646 (50%) \u0639\u0628\u0631 \u062D\u0633\u0627\u0628 CCP (\u0628\u0631\u064A\u062F \u0627\u0644\u062C\u0632\u0627\u0626\u0631) \u0648\u0625\u0631\u0641\u0627\u0642 \u0635\u0648\u0631\u0629 \u0627\u0644\u0648\u0635\u0644 \u0647\u0646\u0627 \u0644\u062A\u0633\u0631\u064A\u0639 \u062A\u0623\u0643\u064A\u062F \u0627\u0644\u0637\u0644\u0628\u060C \u0623\u0648 \u062A\u0623\u0643\u064A\u062F \u0627\u0644\u0637\u0644\u0628 \u0623\u0648\u0644\u0627\u064B \u0648\u0627\u0633\u062A\u0644\u0627\u0645 \u062A\u0641\u0627\u0635\u064A\u0644 \u0627\u0644\u062D\u0633\u0627\u0628 \u0639\u0628\u0631 \u0648\u0627\u062A\u0633\u0627\u0628.";
@@ -149,8 +211,8 @@ const DEFAULT_PROMO_SETTINGS = {
 const DEFAULT_SHOWCASE_PHOTOS = [
   {
     id: "showcase-1",
-    imageUrl: SHAWL_IMAGE_PATH,
-    caption: "\u0634\u0627\u0644 \u0645\u064A\u0633 \u0628\u062A\u0637\u0631\u064A\u0632 \u062E\u0637 \u0627\u0644\u062B\u0644\u062B \u0627\u0644\u0630\u0647\u0628\u064A",
+    imageUrl: HERO_IMAGE_PATH,
+    caption: "\u0634\u0627\u0644 \u0648\u0642\u0628\u0639\u0629 \u062A\u062E\u0631\u062C \u0628\u062A\u0637\u0631\u064A\u0632 \u0623\u0643\u0627\u062F\u064A\u0645\u064A \u0630\u0647\u0628\u064A \u0648\u0628\u0648\u0631\u063A\u0646\u062F\u064A",
     wilaya: "\u0627\u0644\u062C\u0632\u0627\u0626\u0631 \u0627\u0644\u0639\u0627\u0635\u0645\u0629 \xB7 \u062C\u0627\u0645\u0639\u0629 \u0647\u0648\u0627\u0631\u064A \u0628\u0648\u0645\u062F\u064A\u0646",
     tag: "\u0634\u0627\u0644\u0627\u062A \u0645\u0637\u0631\u0632\u0629"
   },
@@ -163,7 +225,7 @@ const DEFAULT_SHOWCASE_PHOTOS = [
   },
   {
     id: "showcase-3",
-    imageUrl: HERO_IMAGE_PATH,
+    imageUrl: SHAWL_BACK_IMAGE_PATH,
     caption: "\u062A\u0641\u0635\u064A\u0644 \u0648\u062A\u0637\u0631\u064A\u0632 \u0645\u0646 \u0648\u0631\u0634\u0629 DG by Douaa",
     wilaya: "\u0642\u0633\u0646\u0637\u064A\u0646\u0629 \xB7 \u062F\u0641\u0639\u0629 2026",
     tag: "\u0634\u0627\u0644 \u0628\u0627\u0644\u0638\u0647\u0631"
@@ -584,10 +646,13 @@ export {
   DEFAULT_STORE_STATE,
   DEFAULT_TESTIMONIALS,
   FAQ_ITEMS,
+  HERO_ATELIER_IMAGE_PATH,
   HERO_BANNER_IMAGE_PATH,
   HERO_BLACK_GOLD_IMAGE_PATH,
+  HERO_FALLBACK_SLIDES,
   HERO_IMAGE_PATH,
   HOW_TO_ORDER_STEPS,
+  LEGACY_ASSET_PATH_MAP,
   PRICING_TABLE_ROWS,
   ROBE_IMAGE_PATH,
   ROYAL_FIVE_STOLE_COLORS,
@@ -605,7 +670,9 @@ export {
   WHATSAPP_NUMBER,
   createDefaultDeliveryPricing,
   formatWhatsAppNumber,
+  getProductFallbackImage,
   getWilayaDeliveryFee,
+  normalizeLegacyAssetPath,
   normalizeWhatsAppInput,
   sanitizeSocialUrl
 };

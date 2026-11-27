@@ -480,6 +480,9 @@ function StoleStudio({
                             {
                               src: universityLogo,
                               alt: "\u0634\u0639\u0627\u0631 \u0627\u0644\u062C\u0627\u0645\u0639\u0629",
+                              referrerPolicy: "no-referrer",
+                              loading: "lazy",
+                              decoding: "async",
                               className: "w-full h-full object-cover rounded-full"
                             }
                           )
@@ -602,6 +605,9 @@ function StoleStudio({
                 {
                   src: universityLogo,
                   alt: "\u0634\u0639\u0627\u0631 \u0627\u0644\u062C\u0627\u0645\u0639\u0629 \u0627\u0644\u0645\u0631\u0641\u0642",
+                  referrerPolicy: "no-referrer",
+                  loading: "lazy",
+                  decoding: "async",
                   className: "w-10 h-10 rounded-full object-cover border-2 border-[#5E1734] bg-white shrink-0"
                 }
               ),
