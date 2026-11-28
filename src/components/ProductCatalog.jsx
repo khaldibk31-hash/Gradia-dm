@@ -185,7 +185,9 @@ function ProductDetailView({
   const isAmericanShawlPreview = isStoleProduct && normalizedProductTitle === "\u0627\u0644\u0634\u0627\u0644 \u0627\u0644\u0627\u0645\u0631\u064A\u0643\u064A";
   const isCrystalRoyalStole = isStoleProduct && (product.id === "shawl-crystal-royal-1" || normalizedProductTitle.includes("\u0643\u0631\u064A\u0633\u062A\u0627\u0644") || normalizedProductTitle.includes("\u0645\u0631\u0635\u0639"));
   const isMissShawlModel = isStoleProduct && !isAmericanShawlPreview && !isCrystalRoyalStole && (product.id === "shawl-miss-1" || normalizedProductBranch.includes("\u0645\u064A\u0633") || normalizedProductTitle.includes("\u0645\u064A\u0633"));
-  const isCrepeShawlModel = isMissShawlModel;
+  const isBacklessShawlModel = isStoleProduct && !isAmericanShawlPreview && !isCrystalRoyalStole && (product.id === "shawl-regular-1" || normalizedProductBranch.includes("\u0639\u0627\u062F\u064A") || normalizedProductBranch.includes("\u0628\u0644\u0627 \u0638\u0647\u0631") || normalizedProductBranch.includes("\u0628\u062F\u0648\u0646 \u0638\u0647\u0631") || normalizedProductTitle.includes("\u0639\u0627\u062F\u064A") || normalizedProductTitle.includes("\u0628\u0644\u0627 \u0638\u0647\u0631") || normalizedProductTitle.includes("\u0628\u062F\u0648\u0646 \u0638\u0647\u0631"));
+  const isBackShawlModel = isStoleProduct && !isAmericanShawlPreview && !isCrystalRoyalStole && (product.id === "shawl-back-1" || normalizedProductBranch.includes("\u0628\u0627\u0644\u0638\u0647\u0631") || normalizedProductTitle.includes("\u0628\u0627\u0644\u0638\u0647\u0631"));
+  const isCrepeShawlModel = isMissShawlModel || isBacklessShawlModel || isBackShawlModel;
   const effectiveOptions = useMemo(() => {
     if (!isStoleProduct) return product.options;
     if (hasSavedOptionsOverride || isAmericanShawlPreview) {
