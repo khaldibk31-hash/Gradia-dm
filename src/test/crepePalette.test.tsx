@@ -12,10 +12,11 @@ import {
 } from "@/data/defaultStore";
 
 function renderCatalog(products = DEFAULT_PRODUCTS, extraProps: Record<string, unknown> = {}) {
+  const isAdminMode = Boolean(extraProps["isAdminMode"]);
   const Catalog = ProductCatalog as unknown as React.ComponentType<Record<string, unknown>>;
   return render(
     <StoreEditProvider
-      isAdminMode={false}
+      isAdminMode={isAdminMode}
       customTexts={{}}
       hiddenSections={{}}
       onUpdateText={() => {}}
@@ -25,7 +26,7 @@ function renderCatalog(products = DEFAULT_PRODUCTS, extraProps: Record<string, u
     >
       <Catalog
         products={products}
-        isAdminMode={false}
+        isAdminMode={isAdminMode}
         requestedSection={{ category: "shawl", nonce: 1 }}
         stoleColors={DEFAULT_STOLE_COLORS}
         crepeStoleColors={CREPE_STOLE_COLORS}
@@ -42,7 +43,7 @@ function renderCatalog(products = DEFAULT_PRODUCTS, extraProps: Record<string, u
   );
 }
 
-describe("Curated 18-color Crepe Shawl Palette", () => {
+describe("Curated 18-color Crepe Palette for شال ميس ONLY", () => {
   it("defines the exact 18 luxury colors in exact RTL order (3 rows × 6 swatches)", () => {
     expect(CREPE_STOLE_COLORS).toHaveLength(18);
     expect(CREPE_STOLE_COLORS.map((c) => [c.name, c.hex])).toEqual([
@@ -67,104 +68,119 @@ describe("Curated 18-color Crepe Shawl Palette", () => {
     ]);
   });
 
+  it("displays the 18-color RTL 6-column grid ONLY on شال ميس with كريب selected and switches back on دان", async () => {
+    localStorage.clear();
+    renderCatalog();
+
+    const heading = await screen.findByRole("heading", {
+      name: "شال ميس مع قبعة وتطريز مجاني",
+    });
+    fireEvent.click(heading);
+
+    const grid = await screen.findByText((_content, el) => {
+      return el?.getAttribute("data-palette") === "crepe-18";
+    });
+    expect(grid).toHaveAttribute("dir", "rtl");
+    expect(grid.className).toContain("grid-cols-6");
+
+    const swatches = within(grid).getAllByRole("button");
+    expect(swatches).toHaveLength(18);
+    expect(swatches.map((btn) => btn.getAttribute("aria-label"))).toEqual(
+      CREPE_STOLE_COLORS.map((c) => c.name),
+    );
+
+    // Default active first swatch has double ring border & updated label above grid
+    expect(screen.getByText(/^اللون:/)).toBeInTheDocument();
+    expect(swatches[0]?.className).toContain("border-[#C6A355]");
+    expect(swatches[0]?.className).toContain("ring-[#5E1734]");
+
+    // Click white swatch to verify active title & contrast
+    fireEvent.click(within(grid).getByRole("button", { name: "أبيض ناصع" }));
+    const whiteBtn = within(grid).getByRole("button", { name: "أبيض ناصع" });
+    expect(whiteBtn).toHaveAttribute("aria-pressed", "true");
+    const pickerSection = grid.closest("div")!.parentElement!;
+    expect(within(pickerSection).getByText("أبيض ناصع")).toBeInTheDocument();
+
+    // Switch fabric to دان (Satin) -> restores untouched DEFAULT_STOLE_COLORS
+    const danBtn = screen.getByRole("button", { name: /^دان/ });
+    fireEvent.click(danBtn);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-palette="crepe-18"]')).toBeNull();
+    });
+    expect(screen.getByText(/اختر اللون:/)).toBeInTheDocument();
+    expect(screen.getByTitle("أزرق ملكي")).toBeInTheDocument();
+
+    // Switch back to كريب -> 18-color grid returns
+    const crepeBtn = screen.getByRole("button", { name: /^كريب/ });
+    fireEvent.click(crepeBtn);
+    expect(
+      await screen.findByText((_content, el) => {
+        return el?.getAttribute("data-palette") === "crepe-18";
+      }),
+    ).toBeInTheDocument();
+  });
+
   it.each([
-    { label: "شال ميس", productName: "شال ميس مع قبعة وتطريز مجاني" },
-    { label: "شال بلا ظهر", productName: "شال عادي بدون ظهر مع القبعة" },
-    { label: "شال بالظهر", productName: "شال بالظهر الفاخر مع القبعة" },
+    { productName: "شال عادي بدون ظهر مع القبعة" },
+    { productName: "شال بالظهر الفاخر مع القبعة" },
+    { productName: "شال ملكي مرصع بالكريستال" },
   ])(
-    "displays the 18-color RTL 6-column grid when كريب is selected on $label and switches back on دان",
+    "keeps $productName completely untouched on its original swatch palette even when كريب is selected",
     async ({ productName }) => {
       localStorage.clear();
       renderCatalog();
 
-      const heading = await screen.findByRole("heading", { name: productName });
-      fireEvent.click(heading);
-
-      const grid = await screen.findByText((_content, el) => {
-        return el?.getAttribute("data-palette") === "crepe-18";
-      });
-      expect(grid).toHaveAttribute("dir", "rtl");
-      expect(grid.className).toContain("grid-cols-6");
-
-      const swatches = within(grid).getAllByRole("button");
-      expect(swatches).toHaveLength(18);
-      expect(swatches.map((btn) => btn.getAttribute("aria-label"))).toEqual(
-        CREPE_STOLE_COLORS.map((c) => c.name),
-      );
-
-      // Default active first swatch has double ring border & updated label above grid
-      expect(screen.getByText(/^اللون:/)).toBeInTheDocument();
-      expect(swatches[0]?.className).toContain("border-[#C6A355]");
-      expect(swatches[0]?.className).toContain("ring-[#5E1734]");
-
-      // Click white & sky-blue swatches to verify contrast & active title sync
-      fireEvent.click(within(grid).getByRole("button", { name: "أبيض ناصع" }));
-      const whiteBtn = within(grid).getByRole("button", { name: "أبيض ناصع" });
-      expect(whiteBtn).toHaveAttribute("aria-pressed", "true");
-      expect(whiteBtn.className).toContain("border-[#C6A355]");
-      const pickerSection = grid.closest("div")!.parentElement!;
-      expect(within(pickerSection).getByText("أبيض ناصع")).toBeInTheDocument();
-
-      // Switch fabric to دان (Satin) -> restores untouched DEFAULT_STOLE_COLORS
-      const danBtn = screen.getByRole("button", { name: /^دان/ });
-      fireEvent.click(danBtn);
-
-      await waitFor(() => {
-        expect(document.querySelector('[data-palette="crepe-18"]')).toBeNull();
-      });
+      fireEvent.click(await screen.findByRole("heading", { name: productName }));
+      expect(document.querySelector('[data-palette="crepe-18"]')).toBeNull();
       expect(screen.getByText(/اختر اللون:/)).toBeInTheDocument();
-      expect(screen.getByTitle("أزرق ملكي")).toBeInTheDocument();
-
-      // Switch back to كريب -> 18-color grid returns
-      const crepeBtn = screen.getByRole("button", { name: /^كريب/ });
-      fireEvent.click(crepeBtn);
-      expect(
-        await screen.findByText((_content, el) => {
-          return el?.getAttribute("data-palette") === "crepe-18";
-        }),
-      ).toBeInTheDocument();
+      expect(screen.queryByTitle("أخضر فستقي")).toBeNull();
     },
   );
 
-  it("matches custom product named شال بلا ظهر and preserves real per-color uploaded photos", async () => {
+  it("supports inline Admin Mode per-color photo upload & delete on any of the 18 swatches in شال ميس (كريب)", async () => {
     localStorage.clear();
-    const customBackless = DEFAULT_PRODUCTS.map((p) =>
-      p.id === "shawl-regular-1"
+    const onSetProductColorImage = vi.fn().mockResolvedValue(undefined);
+    const customMiss = DEFAULT_PRODUCTS.map((p) =>
+      p.id === "shawl-miss-1"
         ? {
             ...p,
-            name: "شال بلا ظهر",
-            branch: "شال بلا ظهر",
             colorImages: {
               "أخضر زمردي": "/images/custom-emerald.webp",
             },
           }
         : p,
     );
-    renderCatalog(customBackless);
+    renderCatalog(customMiss, {
+      isAdminMode: true,
+      onSetProductColorImage,
+    });
 
-    fireEvent.click(await screen.findByRole("heading", { name: "شال بلا ظهر" }));
-
-    // Switch to photo preview tab so image updates are rendered
-    fireEvent.click(screen.getByRole("button", { name: /صورة الموديل/ }));
+    fireEvent.click(
+      await screen.findByRole("heading", {
+        name: "شال ميس مع قبعة وتطريز مجاني",
+      }),
+    );
 
     const emeraldBtn = screen.getByRole("button", { name: "أخضر زمردي" });
     fireEvent.click(emeraldBtn);
 
-    const previewImg = screen.getByAltText("شال بلا ظهر - أخضر زمردي");
-    expect(previewImg.getAttribute("src")).toContain("custom-emerald.webp");
+    // Inline Admin controls show change/delete for the uploaded swatch
+    expect(screen.getByText(/صورة مخصصة للون "أخضر زمردي":/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /تغيير صورة اللون/ })).toBeInTheDocument();
+    const deleteColorImgBtn = screen.getByRole("button", { name: "حذف" });
+    fireEvent.click(deleteColorImgBtn);
+    expect(onSetProductColorImage).toHaveBeenCalledWith("shawl-miss-1", "أخضر زمردي", null);
+
+    // Switch to photo tab and verify dedicated swatch photo renders
+    fireEvent.click(screen.getByRole("button", { name: "صورة الموديل" }));
+    const previewImgs = screen.getAllByAltText("شال ميس مع قبعة وتطريز مجاني");
+    expect(
+      previewImgs.some((img) => img.getAttribute("src")?.includes("custom-emerald.webp")),
+    ).toBe(true);
   });
 
-  it("keeps شال ملكي مرصع بالكريستال strictly limited to its 6 luxury colors", async () => {
-    localStorage.clear();
-    renderCatalog();
-
-    fireEvent.click(await screen.findByRole("heading", { name: "شال ملكي مرصع بالكريستال" }));
-    expect(document.querySelector('[data-palette="crepe-18"]')).toBeNull();
-    expect(screen.getByText(/اختر اللون:/)).toBeInTheDocument();
-    expect(screen.queryByTitle("أخضر فستقي")).toBeNull();
-  });
-
-  it("manages ألوان شال الكريب inside AdminDashboardModal and persists customTexts", async () => {
+  it("manages ألوان شال ميس - قماش كريب inside AdminDashboardModal and persists customTexts", async () => {
     const onUpdateDynamicSettings = vi.fn().mockResolvedValue(undefined);
     const Modal = AdminDashboardModal as unknown as React.ComponentType<Record<string, unknown>>;
 
@@ -183,7 +199,7 @@ describe("Curated 18-color Crepe Shawl Palette", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /دوائر الألوان/ }));
-    const crepeCardHeading = await screen.findByText(/ألوان شال الكريب/);
+    const crepeCardHeading = await screen.findByText(/ألوان شال ميس/);
     const crepeCard = crepeCardHeading.closest("div.space-y-3\\.5")!;
 
     const deleteEmeraldBtn = within(crepeCard as HTMLElement).getByLabelText("حذف أخضر زمردي");
