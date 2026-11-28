@@ -24,6 +24,7 @@ import {
   CAP_SWATCHES,
   CATEGORY_BRANCHES,
   CATEGORY_IMAGE_BG_PRESETS,
+  CREPE_STOLE_COLORS,
   DEFAULT_GOWN_COLORS,
   DEFAULT_STOLE_COLORS,
   ROBE_IMAGE_PATH,
@@ -113,6 +114,16 @@ const SEAMLESS_VIGNETTE_STYLE = {
   maskImage: "radial-gradient(ellipse 94% 94% at 50% 50%, #000 72%, rgba(0,0,0,0.68) 88%, transparent 100%)",
   WebkitMaskImage: "radial-gradient(ellipse 94% 94% at 50% 50%, #000 72%, rgba(0,0,0,0.68) 88%, transparent 100%)"
 };
+function isLightSwatchHex(hex) {
+  const clean = (hex || "").replace("#", "").trim();
+  const full = clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
+  const num = Number.parseInt(full, 16);
+  if (Number.isNaN(num)) return false;
+  const r = num >> 16 & 255;
+  const g = num >> 8 & 255;
+  const b = num & 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6;
+}
 function scrollToCatalogTop(targetEl) {
   if (typeof window === "undefined") return;
   requestAnimationFrame(() => {
@@ -139,6 +150,7 @@ function ProductDetailView({
   regularShawlBaseImage,
   initialDesign = null,
   stoleColors,
+  crepeStoleColors = CREPE_STOLE_COLORS,
   crystalRoyalColors,
   onUpdateCrystalRoyalColors,
   gownColors,
@@ -169,18 +181,13 @@ function ProductDetailView({
   const isFlowerProduct = product.category === "accessories";
   const isStoleProduct = product.category === "shawl";
   const normalizedProductTitle = product.name.trim().replace(/أ/g, "\u0627");
+  const normalizedProductBranch = product.branch.trim().replace(/أ/g, "\u0627");
   const isAmericanShawlPreview = isStoleProduct && normalizedProductTitle === "\u0627\u0644\u0634\u0627\u0644 \u0627\u0644\u0627\u0645\u0631\u064A\u0643\u064A";
   const isCrystalRoyalStole = isStoleProduct && (product.id === "shawl-crystal-royal-1" || normalizedProductTitle.includes("\u0643\u0631\u064A\u0633\u062A\u0627\u0644") || normalizedProductTitle.includes("\u0645\u0631\u0635\u0639"));
-  const resolvedStoleColors = useMemo(() => {
-    if (isCrystalRoyalStole) {
-      const source = Array.isArray(crystalRoyalColors) && crystalRoyalColors.length > 0 ? crystalRoyalColors : ROYAL_SIX_STOLE_COLORS;
-      return source.slice(0, 6);
-    }
-    return stoleColors.length > 0 ? stoleColors : DEFAULT_STOLE_COLORS;
-  }, [isCrystalRoyalStole, crystalRoyalColors, stoleColors]);
-  const activeMainColors = product.category === "cap" ? capColors.length > 0 ? capColors : CAP_SWATCHES : product.category === "robe" ? gownColors.length > 0 ? gownColors : DEFAULT_GOWN_COLORS : resolvedStoleColors;
-  const activeThreadColors = threadColors.length > 0 ? threadColors : THREAD_COLORS;
-  const activeCapColors = capColors.length > 0 ? capColors : CAP_SWATCHES;
+  const isMissShawlModel = isStoleProduct && !isAmericanShawlPreview && !isCrystalRoyalStole && (product.id === "shawl-miss-1" || normalizedProductBranch.includes("\u0645\u064A\u0633") || normalizedProductTitle.includes("\u0645\u064A\u0633"));
+  const isBacklessShawlModel = isStoleProduct && !isAmericanShawlPreview && !isCrystalRoyalStole && (product.id === "shawl-regular-1" || normalizedProductBranch.includes("\u0639\u0627\u062F\u064A") || normalizedProductBranch.includes("\u0628\u0644\u0627 \u0638\u0647\u0631") || normalizedProductBranch.includes("\u0628\u062F\u0648\u0646 \u0638\u0647\u0631") || normalizedProductTitle.includes("\u0639\u0627\u062F\u064A") || normalizedProductTitle.includes("\u0628\u0644\u0627 \u0638\u0647\u0631") || normalizedProductTitle.includes("\u0628\u062F\u0648\u0646 \u0638\u0647\u0631"));
+  const isBackShawlModel = isStoleProduct && !isAmericanShawlPreview && !isCrystalRoyalStole && (product.id === "shawl-back-1" || normalizedProductBranch.includes("\u0628\u0627\u0644\u0638\u0647\u0631") || normalizedProductTitle.includes("\u0628\u0627\u0644\u0638\u0647\u0631"));
+  const isCrepeShawlModel = isMissShawlModel || isBacklessShawlModel || isBackShawlModel;
   const effectiveOptions = useMemo(() => {
     if (!isStoleProduct) return product.options;
     if (hasSavedOptionsOverride || isAmericanShawlPreview) {
@@ -212,6 +219,43 @@ function ProductDetailView({
     product.options,
     product.basePrice
   ]);
+  const PRODUCT_DRAFT_KEY = `dg_stole_draft_${product.id}`;
+  const readProductDraft = () => {
+    if (!isStoleProduct || typeof window === "undefined") return null;
+    try {
+      const raw = localStorage.getItem(PRODUCT_DRAFT_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  };
+  const savedProductDraft = !matchingShared ? readProductDraft() : null;
+  const [selectedOptionIdx, setSelectedOptionIdx] = useState(() => {
+    if (matchingShared?.optIdx !== void 0 && matchingShared.optIdx >= 0 && matchingShared.optIdx < effectiveOptions.length) {
+      return matchingShared.optIdx;
+    }
+    if (savedProductDraft?.optIdx !== void 0 && savedProductDraft.optIdx >= 0 && savedProductDraft.optIdx < effectiveOptions.length) {
+      return savedProductDraft.optIdx;
+    }
+    return 0;
+  });
+  const activeFabricLabel = (effectiveOptions[selectedOptionIdx]?.label || effectiveOptions[0]?.label || "").trim();
+  const isCrepeFabricSelected = activeFabricLabel.includes("\u0643\u0631\u064A\u0628");
+  const isCrepePaletteActive = isCrepeShawlModel && isCrepeFabricSelected;
+  const resolvedStoleColors = useMemo(() => {
+    if (isCrystalRoyalStole) {
+      const source = Array.isArray(crystalRoyalColors) && crystalRoyalColors.length > 0 ? crystalRoyalColors : ROYAL_SIX_STOLE_COLORS;
+      return source.slice(0, 6);
+    }
+    if (isCrepePaletteActive) {
+      return Array.isArray(crepeStoleColors) && crepeStoleColors.length > 0 ? crepeStoleColors : CREPE_STOLE_COLORS;
+    }
+    return stoleColors.length > 0 ? stoleColors : DEFAULT_STOLE_COLORS;
+  }, [isCrystalRoyalStole, crystalRoyalColors, isCrepePaletteActive, crepeStoleColors, stoleColors]);
+  const activeMainColors = product.category === "cap" ? capColors.length > 0 ? capColors : CAP_SWATCHES : product.category === "robe" ? gownColors.length > 0 ? gownColors : DEFAULT_GOWN_COLORS : resolvedStoleColors;
+  const activeThreadColors = threadColors.length > 0 ? threadColors : THREAD_COLORS;
+  const activeCapColors = capColors.length > 0 ? capColors : CAP_SWATCHES;
   const DEFAULT_GOWN_SIZE_OPTIONS = ["S", "M", "L", "XL", "XXL", "\u0645\u0642\u0627\u0633 \u062E\u0627\u0635"];
   const rawFilteredSecondaryOptions = product.secondaryLabel === "\u0646\u0648\u0639 \u0627\u0644\u0642\u0628\u0639\u0629" ? [] : (product.secondaryOptions || []).filter((opt) => !isCapSecondaryOption(opt));
   const visibleSecondaryOptions = product.category === "robe" && rawFilteredSecondaryOptions.length === 0 ? DEFAULT_GOWN_SIZE_OPTIONS : rawFilteredSecondaryOptions;
@@ -239,27 +283,6 @@ function ProductDetailView({
       image: null
     }
   ];
-  const PRODUCT_DRAFT_KEY = `dg_stole_draft_${product.id}`;
-  const readProductDraft = () => {
-    if (!isStoleProduct || typeof window === "undefined") return null;
-    try {
-      const raw = localStorage.getItem(PRODUCT_DRAFT_KEY);
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch {
-      return null;
-    }
-  };
-  const savedProductDraft = !matchingShared ? readProductDraft() : null;
-  const [selectedOptionIdx, setSelectedOptionIdx] = useState(() => {
-    if (matchingShared?.optIdx !== void 0 && matchingShared.optIdx >= 0 && matchingShared.optIdx < effectiveOptions.length) {
-      return matchingShared.optIdx;
-    }
-    if (savedProductDraft?.optIdx !== void 0 && savedProductDraft.optIdx >= 0 && savedProductDraft.optIdx < effectiveOptions.length) {
-      return savedProductDraft.optIdx;
-    }
-    return 0;
-  });
   const [draftOptions, setDraftOptions] = useState(
     () => effectiveOptions.map((o) => ({ label: o.label, price: String(o.price) }))
   );
@@ -2607,38 +2630,50 @@ function ProductDetailView({
               }
             )
           ] }) : /* @__PURE__ */ jsxs("div", { children: [
-            /* @__PURE__ */ jsxs("label", { className: "block text-xs font-bold text-[#1A1617] mb-2", children: [
-              "\u0627\u062E\u062A\u0631 \u0627\u0644\u0644\u0648\u0646:",
+            /* @__PURE__ */ jsxs("label", { className: "block text-xs font-bold text-[#1A1617] mb-2.5", children: [
+              isCrepePaletteActive ? "\u0627\u0644\u0644\u0648\u0646:" : "\u0627\u062E\u062A\u0631 \u0627\u0644\u0644\u0648\u0646:",
               " ",
               /* @__PURE__ */ jsxs("span", { className: "text-[#5E1734]", children: [
                 selectedColor.name,
                 selectedColor.extraPrice && selectedColor.extraPrice > 0 ? ` (+${selectedColor.extraPrice.toLocaleString("en-US")} \u062F\u062C)` : ""
               ] })
             ] }),
-            /* @__PURE__ */ jsx("div", { className: "flex flex-wrap items-center gap-2.5", children: activeMainColors.map((swatch) => {
-              const isActive = swatch.name === selectedColor.name && swatch.hex === selectedColor.hex;
-              const hasPhoto = Boolean(product.colorImages?.[swatch.name]);
-              return /* @__PURE__ */ jsxs(
-                "button",
-                {
-                  type: "button",
-                  title: swatch.extraPrice && swatch.extraPrice > 0 ? `${swatch.name} (+${swatch.extraPrice} \u062F\u062C)` : swatch.name,
-                  onClick: () => setSelectedColor(swatch),
-                  className: `relative w-8 h-8 rounded-full border flex items-center justify-center transition-transform cursor-pointer ${isActive ? "ring-2 ring-[#5E1734] ring-offset-2 ring-offset-white scale-110 border-[#5E1734]" : "border-[#C6A355]/45"}`,
-                  style: { backgroundColor: swatch.hex },
-                  children: [
-                    isActive && /* @__PURE__ */ jsx(
-                      Check,
-                      {
-                        className: `w-4 h-4 ${swatch.hex.toLowerCase() === "#f5f5f4" || swatch.hex.toLowerCase() === "#e7d8c9" || swatch.hex.toLowerCase() === "#9ca3af" || swatch.hex.toLowerCase() === "#ede6d8" || swatch.hex.toLowerCase() === "#f4efe6" || swatch.hex.toLowerCase() === "#f7f3ea" || swatch.hex.toLowerCase() === "#faf8f5" || swatch.hex.toLowerCase() === "#ffffff" ? "text-[#1A1617]" : "text-white"}`
-                      }
-                    ),
-                    hasPhoto && !isActive && /* @__PURE__ */ jsx("span", { className: "absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#5E1734] border border-white" })
-                  ]
-                },
-                `${swatch.name}-${swatch.hex}`
-              );
-            }) }),
+            /* @__PURE__ */ jsx(
+              "div",
+              {
+                dir: isCrepePaletteActive ? "rtl" : void 0,
+                "data-palette": isCrepePaletteActive ? "crepe-18" : void 0,
+                className: isCrepePaletteActive ? "grid grid-cols-6 gap-2.5 sm:gap-3 w-fit" : "flex flex-wrap items-center gap-2.5",
+                children: activeMainColors.map((swatch) => {
+                  const isActive = swatch.name === selectedColor.name && swatch.hex === selectedColor.hex;
+                  const hasPhoto = Boolean(product.colorImages?.[swatch.name]);
+                  const isLight = isLightSwatchHex(swatch.hex);
+                  const isVeryLight = swatch.hex.toLowerCase() === "#f9f9f7" || swatch.hex.toLowerCase() === "#efe6d5" || swatch.hex.toLowerCase() === "#ede6d8" || swatch.hex.toLowerCase() === "#faf8f5" || swatch.hex.toLowerCase() === "#ffffff";
+                  return /* @__PURE__ */ jsxs(
+                    "button",
+                    {
+                      type: "button",
+                      "aria-label": swatch.name,
+                      "aria-pressed": isActive,
+                      title: swatch.extraPrice && swatch.extraPrice > 0 ? `${swatch.name} (+${swatch.extraPrice} \u062F\u062C)` : swatch.name,
+                      onClick: () => setSelectedColor(swatch),
+                      className: isCrepePaletteActive ? `relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer ${isActive ? "border-2 border-[#C6A355] ring-2 ring-[#5E1734] ring-offset-2 ring-offset-white scale-110 shadow-sm" : isVeryLight ? "border border-[#C6A355]/75 hover:scale-105" : "border border-[#1A1617]/15 hover:scale-105"}` : `relative w-8 h-8 rounded-full border flex items-center justify-center transition-transform cursor-pointer ${isActive ? "ring-2 ring-[#5E1734] ring-offset-2 ring-offset-white scale-110 border-[#5E1734]" : "border-[#C6A355]/45"}`,
+                      style: { backgroundColor: swatch.hex },
+                      children: [
+                        isActive && /* @__PURE__ */ jsx(
+                          Check,
+                          {
+                            className: `w-4 h-4 ${isLight || swatch.hex.toLowerCase() === "#9ca3af" ? "text-[#1A1617]" : "text-white"}`
+                          }
+                        ),
+                        hasPhoto && !isActive && /* @__PURE__ */ jsx("span", { className: "absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#5E1734] border border-white" })
+                      ]
+                    },
+                    `${swatch.name}-${swatch.hex}`
+                  );
+                })
+              }
+            ),
             isAdminMode && /* @__PURE__ */ jsxs("div", { className: "mt-3 p-3 rounded-2xl bg-[#FAF8F5] border border-[#C6A355]/35 space-y-2", children: [
               isCrystalRoyalStole && onUpdateCrystalRoyalColors && /* @__PURE__ */ jsxs("div", { className: "pb-2.5 border-b border-[#C6A355]/30 space-y-2", children: [
                 /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap items-center justify-between gap-2", children: [
@@ -4261,6 +4296,7 @@ function ProductCatalog({
   categoryPauseBadge = "\u064A\u062A\u0648\u0641\u0631 \u0642\u0631\u064A\u0628\u0627\u064B",
   storewideDiscountPercent = 0,
   stoleColors = DEFAULT_STOLE_COLORS,
+  crepeStoleColors = CREPE_STOLE_COLORS,
   crystalRoyalColors,
   onUpdateCrystalRoyalColors,
   gownColors = DEFAULT_GOWN_COLORS,
@@ -4631,6 +4667,7 @@ function ProductCatalog({
                 regularShawlBaseImage,
                 initialDesign: initialSharedDesign,
                 stoleColors,
+                crepeStoleColors,
                 crystalRoyalColors,
                 onUpdateCrystalRoyalColors,
                 gownColors,

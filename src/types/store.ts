@@ -168,6 +168,7 @@ export type StoreSectionKey =
 
 export interface StoreDynamicSettings {
   stoleColors: ColorSwatch[];
+  crepeStoleColors?: ColorSwatch[];
   gownColors: ColorSwatch[];
   threadColors: ColorSwatch[];
   capColors: ColorSwatch[];

@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import {
   ALGERIA_WILAYAS,
+  CREPE_STOLE_COLORS,
   DEFAULT_CAP_OPTION_PRICES,
   DEFAULT_CATEGORY_PAUSE_BADGE,
   DEFAULT_DELIVERY_PRICING,
@@ -339,6 +340,20 @@ function sanitizeStoleOrGownColorList(raw, fallback) {
     });
   }
   return cleaned;
+}
+function sanitizeCrepeColorList(raw, rawCustomTexts, fallback = CREPE_STOLE_COLORS) {
+  let candidate = raw;
+  if ((!Array.isArray(candidate) || candidate.length === 0) && rawCustomTexts && typeof rawCustomTexts["catalog.crepeStoleColors"] === "string") {
+    try {
+      const parsed = JSON.parse(rawCustomTexts["catalog.crepeStoleColors"]);
+      if (Array.isArray(parsed)) {
+        candidate = parsed;
+      }
+    } catch {
+    }
+  }
+  const cleaned = sanitizeColorList(candidate, fallback);
+  return cleaned.length > 0 ? cleaned : fallback;
 }
 const VALID_CATEGORY_IDS = ["shawl", "robe", "cap", "accessories"];
 const VALID_SECTION_KEYS = [
@@ -785,6 +800,11 @@ function readCachedDynamicSettings() {
         parsed.stoleColors,
         DEFAULT_DYNAMIC_SETTINGS.stoleColors
       ),
+      crepeStoleColors: sanitizeCrepeColorList(
+        parsed.crepeStoleColors,
+        parsed.customTexts,
+        DEFAULT_DYNAMIC_SETTINGS.crepeStoleColors ?? CREPE_STOLE_COLORS
+      ),
       gownColors: sanitizeStoleOrGownColorList(
         parsed.gownColors,
         DEFAULT_DYNAMIC_SETTINGS.gownColors
@@ -882,6 +902,11 @@ async function loadDynamicSettings(storeStateBackup) {
     stoleColors: sanitizeStoleOrGownColorList(
       rawBase.stoleColors,
       DEFAULT_DYNAMIC_SETTINGS.stoleColors
+    ),
+    crepeStoleColors: sanitizeCrepeColorList(
+      rawBase.crepeStoleColors ?? cached?.crepeStoleColors,
+      rawBase.customTexts ?? cached?.customTexts,
+      DEFAULT_DYNAMIC_SETTINGS.crepeStoleColors ?? CREPE_STOLE_COLORS
     ),
     gownColors: sanitizeStoleOrGownColorList(
       rawBase.gownColors,
@@ -984,6 +1009,11 @@ async function loadDynamicSettings(storeStateBackup) {
             stoleColors: sanitizeStoleOrGownColorList(
               record.stole_colors,
               result.stoleColors
+            ),
+            crepeStoleColors: sanitizeCrepeColorList(
+              record.crepe_stole_colors,
+              record.custom_texts,
+              result.crepeStoleColors ?? CREPE_STOLE_COLORS
             ),
             gownColors: sanitizeStoleOrGownColorList(
               record.gown_colors,
@@ -1212,6 +1242,11 @@ async function saveDynamicSettings(settings, currentStoreState) {
   );
   let withTimestamp = {
     ...settings,
+    crepeStoleColors: sanitizeCrepeColorList(
+      settings.crepeStoleColors,
+      mergedCustomTexts,
+      CREPE_STOLE_COLORS
+    ),
     pauseMessage: settings.pauseMessage.trim() || DEFAULT_PAUSE_MESSAGE,
     pausedCategories: sanitizePausedCategories(settings.pausedCategories),
     categoryPauseBadge: (settings.categoryPauseBadge || "").trim() || DEFAULT_CATEGORY_PAUSE_BADGE,
@@ -1325,6 +1360,11 @@ async function saveDynamicSettings(settings, currentStoreState) {
     );
   } else {
     delete mergedCustomTexts["catalog.priceOverrides"];
+  }
+  if (Array.isArray(withTimestamp.crepeStoleColors) && withTimestamp.crepeStoleColors.length > 0) {
+    mergedCustomTexts["catalog.crepeStoleColors"] = JSON.stringify(
+      withTimestamp.crepeStoleColors
+    );
   }
   writeCachedDynamicSettings(withTimestamp);
   if (currentStoreState?.products) {

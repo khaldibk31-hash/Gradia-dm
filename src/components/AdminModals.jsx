@@ -44,6 +44,7 @@ import {
   ALGERIA_WILAYAS,
   CAP_SWATCHES,
   CATEGORY_LABELS,
+  CREPE_STOLE_COLORS,
   DEFAULT_CATEGORY_PAUSE_BADGE,
   DEFAULT_DELIVERY_PRICING,
   DEFAULT_GOWN_COLORS,
@@ -743,6 +744,7 @@ function AdminDashboardModal({
   const [savingDeliveryPricing, setSavingDeliveryPricing] = useState(false);
   const [newColorForms, setNewColorForms] = useState({
     stoleColors: { name: "", hex: "#8E244D", extraPrice: "0" },
+    crepeStoleColors: { name: "", hex: "#5E1734", extraPrice: "0" },
     gownColors: { name: "", hex: "#141212", extraPrice: "0" },
     threadColors: { name: "", hex: "#C6A355", extraPrice: "0" },
     capColors: { name: "", hex: "#141212", extraPrice: "0" }
@@ -1481,6 +1483,19 @@ function AdminDashboardModal({
     setBulkHomePrice("");
     onNotify("info", '\u062A\u0645 \u062A\u0635\u0641\u064A\u0631 \u0627\u0644\u0623\u0633\u0639\u0627\u0631 \u0645\u0624\u0642\u062A\u0627\u064B. \u0627\u0636\u063A\u0637\u064A "\u062D\u0641\u0638 \u0623\u0633\u0639\u0627\u0631 \u0627\u0644\u062A\u0648\u0635\u064A\u0644" \u0644\u0644\u062A\u0623\u0643\u064A\u062F.');
   };
+  const getSettingsColorList = (listKey) => {
+    const existing = dynamicSettings[listKey];
+    if (Array.isArray(existing) && existing.length > 0) return existing;
+    if (listKey === "crepeStoleColors") return CREPE_STOLE_COLORS;
+    return existing || [];
+  };
+  const syncColorCustomTexts = (listKey, updatedList) => {
+    if (listKey !== "crepeStoleColors") return dynamicSettings.customTexts;
+    return {
+      ...dynamicSettings.customTexts || {},
+      "catalog.crepeStoleColors": JSON.stringify(updatedList)
+    };
+  };
   const handleAddColor = async (listKey, e) => {
     e.preventDefault();
     const form = newColorForms[listKey];
@@ -1494,11 +1509,13 @@ function AdminDashboardModal({
       name: cleanName,
       hex: form.hex || "#141212",
       extraPrice,
-      ...listKey === "stoleColors" ? { defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A \u0645\u0644\u0643\u064A" } : {}
+      ...listKey === "stoleColors" || listKey === "crepeStoleColors" ? { defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A \u0645\u0644\u0643\u064A" } : {}
     };
+    const updatedList = [...getSettingsColorList(listKey), newSwatch];
     const nextSettings = {
       ...dynamicSettings,
-      [listKey]: [...dynamicSettings[listKey], newSwatch]
+      [listKey]: updatedList,
+      ...listKey === "crepeStoleColors" ? { customTexts: syncColorCustomTexts(listKey, updatedList) } : {}
     };
     setSavingSettings(true);
     try {
@@ -1513,11 +1530,13 @@ function AdminDashboardModal({
     }
   };
   const handleDeleteColor = async (listKey, index) => {
-    const target = dynamicSettings[listKey][index];
-    const updatedList = dynamicSettings[listKey].filter((_, idx) => idx !== index);
+    const currentList = getSettingsColorList(listKey);
+    const target = currentList[index];
+    const updatedList = currentList.filter((_, idx) => idx !== index);
     const nextSettings = {
       ...dynamicSettings,
-      [listKey]: updatedList
+      [listKey]: updatedList,
+      ...listKey === "crepeStoleColors" ? { customTexts: syncColorCustomTexts(listKey, updatedList) } : {}
     };
     setSavingSettings(true);
     try {
@@ -1530,15 +1549,18 @@ function AdminDashboardModal({
   const handleResetColorList = async (listKey) => {
     const defaultsMap = {
       stoleColors: DEFAULT_STOLE_COLORS,
+      crepeStoleColors: CREPE_STOLE_COLORS,
       gownColors: DEFAULT_GOWN_COLORS,
       threadColors: THREAD_COLORS,
       capColors: CAP_SWATCHES
     };
+    const defaultList = defaultsMap[listKey];
     setSavingSettings(true);
     try {
       await onUpdateDynamicSettings({
         ...dynamicSettings,
-        [listKey]: defaultsMap[listKey]
+        [listKey]: defaultList,
+        ...listKey === "crepeStoleColors" ? { customTexts: syncColorCustomTexts(listKey, defaultList) } : {}
       });
       onNotify("success", "\u062A\u0645\u062A \u0627\u0633\u062A\u0639\u0627\u062F\u0629 \u0627\u0644\u0623\u0644\u0648\u0627\u0646 \u0627\u0644\u0627\u0641\u062A\u0631\u0627\u0636\u064A\u0629 \u0628\u0646\u062C\u0627\u062D.");
     } finally {
@@ -2887,9 +2909,14 @@ function AdminDashboardModal({
           ] }),
           [
             {
+              key: "crepeStoleColors",
+              title: "\u0623\u0644\u0648\u0627\u0646 \u0634\u0627\u0644 \u0627\u0644\u0643\u0631\u064A\u0628 (18 \u0644\u0648\u0646)",
+              subtitle: "\u062A\u0638\u0647\u0631 \u0639\u0646\u062F \u0627\u062E\u062A\u064A\u0627\u0631 \u0642\u0645\u0627\u0634 \u0643\u0631\u064A\u0628 \u0641\u064A \u0634\u0627\u0644 \u0645\u064A\u0633\u060C \u0634\u0627\u0644 \u0628\u0644\u0627 \u0638\u0647\u0631\u060C \u0648\u0634\u0627\u0644 \u0628\u0627\u0644\u0638\u0647\u0631 (3 \u0635\u0641\u0648\u0641 \xD7 6 \u0623\u0644\u0648\u0627\u0646)."
+            },
+            {
               key: "stoleColors",
-              title: "\u0623\u0644\u0648\u0627\u0646 \u0627\u0644\u0648\u0634\u0627\u062D",
-              subtitle: "\u062A\u0638\u0647\u0631 \u062D\u0635\u0631\u064A\u0627\u064B \u0641\u064A \u0627\u0633\u062A\u0648\u062F\u064A\u0648 \u062A\u0635\u0645\u064A\u0645 \u0627\u0644\u0648\u0634\u0627\u062D \u0648\u0641\u064A \u0635\u0641\u062D\u0627\u062A \u0627\u0644\u0634\u0627\u0644\u0627\u062A."
+              title: "\u0623\u0644\u0648\u0627\u0646 \u0627\u0644\u0648\u0634\u0627\u062D (\u0642\u0645\u0627\u0634 \u062F\u0627\u0646 \u0648\u0627\u0644\u0627\u0633\u062A\u0648\u062F\u064A\u0648)",
+              subtitle: "\u062A\u0638\u0647\u0631 \u0641\u064A \u0627\u0633\u062A\u0648\u062F\u064A\u0648 \u062A\u0635\u0645\u064A\u0645 \u0627\u0644\u0648\u0634\u0627\u062D \u0648\u0639\u0646\u062F \u0627\u062E\u062A\u064A\u0627\u0631 \u0642\u0645\u0627\u0634 \u062F\u0627\u0646 \u0641\u064A \u0635\u0641\u062D\u0627\u062A \u0627\u0644\u0634\u0627\u0644\u0627\u062A."
             },
             {
               key: "gownColors",
@@ -2907,7 +2934,7 @@ function AdminDashboardModal({
               subtitle: '\u0623\u0644\u0648\u0627\u0646 \u0627\u0644\u0642\u0628\u0639\u0627\u062A \u0627\u0644\u0645\u0646\u0641\u0631\u062F\u0629 \u0648\u062E\u064A\u0627\u0631 "\u0644\u0648\u0646 \u0622\u062E\u0631" \u0644\u0644\u0642\u0628\u0639\u0629.'
             }
           ].map((group) => {
-            const list = dynamicSettings[group.key];
+            const list = getSettingsColorList(group.key);
             const form = newColorForms[group.key];
             return /* @__PURE__ */ jsxs(
               "div",

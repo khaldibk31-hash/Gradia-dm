@@ -42,7 +42,7 @@ function isDefaultDarkGownColor(hex, name) {
 function isIvoryWhiteSwatch(hex, name) {
   const cleanHex = hex.trim().toLowerCase();
   const cleanName = name.trim();
-  return cleanName.includes("\u0623\u0628\u064A\u0636") || cleanName.includes("\u0639\u0627\u062C\u064A") || cleanHex === "#ede6d8" || cleanHex === "#f4efe6" || cleanHex === "#f5f0e6" || cleanHex === "#f5f5f4" || cleanHex === "#ffffff" || cleanHex === "#faf8f5";
+  return cleanName.includes("\u0623\u0628\u064A\u0636") || cleanName.includes("\u0639\u0627\u062C\u064A") || cleanHex === "#ede6d8" || cleanHex === "#efe6d5" || cleanHex === "#f4efe6" || cleanHex === "#f5f0e6" || cleanHex === "#f5f5f4" || cleanHex === "#f9f9f7" || cleanHex === "#ffffff" || cleanHex === "#faf8f5";
 }
 async function loadImageForCanvas(src) {
   const tryLoad = (url, useCors) => new Promise((resolve, reject) => {
@@ -292,6 +292,7 @@ function renderRecoloredDataUrl(mask, colorHex, colorName) {
   const tLum = (0.299 * tr + 0.587 * tg + 0.114 * tb) / 255;
   const isIvory = isIvoryWhiteSwatch(colorHex, colorName);
   const isLightSwatch = !isIvory && tLum > 0.56;
+  const isMidLightSwatch = !isIvory && !isLightSwatch && tLum >= 0.42;
   const isJewelSwatch = tLum >= 0.12 && tLum <= 0.34;
   if (!sharedOutputCanvas) {
     sharedOutputCanvas = document.createElement("canvas");
@@ -316,15 +317,15 @@ function renderRecoloredDataUrl(mask, colorHex, colorName) {
   const activeFoldCurves = mask.activeFoldCurves;
   const activeLen = activeIndices.length;
   if (isIvory) {
-    const shadowR = 180;
-    const shadowG = 172;
-    const shadowB = 158;
-    const ivoryR = 237;
-    const ivoryG = 230;
-    const ivoryB = 216;
-    const hiR = 242;
-    const hiG = 236;
-    const hiB = 224;
+    const shadowR = Math.round(tr * 0.76);
+    const shadowG = Math.round(tg * 0.75);
+    const shadowB = Math.round(tb * 0.74);
+    const ivoryR = tr;
+    const ivoryG = tg;
+    const ivoryB = tb;
+    const hiR = Math.min(255, Math.round(tr + (255 - tr) * 0.42));
+    const hiG = Math.min(255, Math.round(tg + (255 - tg) * 0.42));
+    const hiB = Math.min(255, Math.round(tb + (255 - tb) * 0.42));
     for (let i = 0; i < activeLen; i++) {
       const idx = activeIndices[i];
       const w = activeWeights[i];
@@ -373,8 +374,8 @@ function renderRecoloredDataUrl(mask, colorHex, colorName) {
       dst[idx + 2] = cb < 0 ? 0 : cb > 255 ? 255 : cb + 0.5 | 0;
     }
   } else {
-    const baseShade = isLightSwatch ? 0.62 : isJewelSwatch ? 0.52 : 0.46;
-    const foldGain = isLightSwatch ? 0.42 : isJewelSwatch ? 0.96 : 0.92;
+    const baseShade = isLightSwatch ? 0.62 : isMidLightSwatch ? 0.54 : isJewelSwatch ? 0.52 : 0.46;
+    const foldGain = isLightSwatch ? 0.42 : isMidLightSwatch ? 0.68 : isJewelSwatch ? 0.96 : 0.92;
     for (let i = 0; i < activeLen; i++) {
       const idx = activeIndices[i];
       const w = activeWeights[i];

@@ -37,6 +37,7 @@ import {
   BOUQUET_IMAGE_PATH,
   BRAND_LOGO_PATH,
   CAP_IMAGE_PATH,
+  CREPE_STOLE_COLORS,
   DEFAULT_CAP_OPTION_PRICES,
   DEFAULT_DYNAMIC_SETTINGS,
   DEFAULT_PAUSE_MESSAGE,
@@ -2028,6 +2029,7 @@ function App() {
                         whatsappNumber: storeWhatsappNumber,
                         onExpressCheckout: () => openAppModal("cart"),
                         stoleColors: dynamicSettings.stoleColors,
+                        crepeStoleColors: dynamicSettings.crepeStoleColors ?? CREPE_STOLE_COLORS,
                         crystalRoyalColors: sanitizeCrystalRoyalColors(
                           dynamicSettings.customTexts?.["catalog.crystalRoyalColors"] ?? storeState.customTexts?.["catalog.crystalRoyalColors"]
                         ),

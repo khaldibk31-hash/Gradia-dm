@@ -145,6 +145,26 @@ const STOLE_COLORS = [
   { name: "\u0631\u0645\u0627\u062F\u064A \u0641\u062D\u0645\u064A", hex: "#373534", extraPrice: 0, defaultThreadHex: "#e5e0d8", defaultThreadName: "\u0641\u0636\u064A" },
   { name: "\u0623\u0628\u064A\u0636 \u0639\u0627\u062C\u064A", hex: "#EDE6D8", extraPrice: 0, defaultThreadHex: "#762b43", defaultThreadName: "\u0628\u0648\u0631\u063A\u0646\u062F\u064A" }
 ];
+const CREPE_STOLE_COLORS = [
+  { name: "\u0628\u0648\u0631\u063A\u0646\u062F\u064A", hex: "#5E1734", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A \u0645\u0644\u0643\u064A" },
+  { name: "\u0639\u0646\u0627\u0628\u064A \u062F\u0627\u0643\u0646", hex: "#8B1538", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A \u0645\u0644\u0643\u064A" },
+  { name: "\u0623\u062D\u0645\u0631 \u0645\u0644\u0643\u064A", hex: "#A61C2B", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A \u0645\u0644\u0643\u064A" },
+  { name: "\u0642\u0631\u0645\u0632\u064A", hex: "#B2182B", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A \u0645\u0644\u0643\u064A" },
+  { name: "\u0628\u0646\u0641\u0633\u062C\u064A \u0645\u0644\u0643\u064A", hex: "#3B1254", extraPrice: 0, defaultThreadHex: "#e2e8f0", defaultThreadName: "\u0641\u0636\u064A \u0644\u0624\u0644\u0624\u064A" },
+  { name: "\u0623\u0633\u0648\u062F", hex: "#141414", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A \u0645\u0644\u0643\u064A" },
+  { name: "\u0623\u0632\u0631\u0642 \u0645\u0644\u0643\u064A", hex: "#1D39A8", extraPrice: 0, defaultThreadHex: "#e2e8f0", defaultThreadName: "\u0641\u0636\u064A \u0644\u0624\u0644\u0624\u064A" },
+  { name: "\u0623\u0632\u0631\u0642 \u0633\u0645\u0627\u0648\u064A", hex: "#74B9E7", extraPrice: 0, defaultThreadHex: "#181514", defaultThreadName: "\u0623\u0633\u0648\u062F \u0641\u062D\u0645\u064A" },
+  { name: "\u0623\u062E\u0636\u0631 \u0632\u0645\u0631\u062F\u064A", hex: "#115737", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A \u0645\u0644\u0643\u064A" },
+  { name: "\u0623\u062E\u0636\u0631 \u0632\u064A\u062A\u0648\u0646\u064A", hex: "#5D6B2A", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A \u0645\u0644\u0643\u064A" },
+  { name: "\u0623\u062E\u0636\u0631 \u0641\u0633\u062A\u0642\u064A", hex: "#9AB36B", extraPrice: 0, defaultThreadHex: "#762b43", defaultThreadName: "\u0628\u0648\u0631\u063A\u0646\u062F\u064A" },
+  { name: "\u0623\u0632\u0631\u0642 \u0628\u062A\u0631\u0648\u0644\u064A", hex: "#1E4D6B", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A \u0645\u0644\u0643\u064A" },
+  { name: "\u0628\u0646\u064A \u0634\u0648\u0643\u0648\u0644\u0627\u062A\u0629", hex: "#361D14", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A \u0645\u0644\u0643\u064A" },
+  { name: "\u0628\u0646\u064A \u062F\u0627\u0641\u0626", hex: "#5C3626", extraPrice: 0, defaultThreadHex: "#d4af37", defaultThreadName: "\u0630\u0647\u0628\u064A \u0645\u0644\u0643\u064A" },
+  { name: "\u0648\u0631\u062F\u064A \u062A\u0631\u0627\u0628\u064A", hex: "#B56B76", extraPrice: 0, defaultThreadHex: "#762b43", defaultThreadName: "\u0628\u0648\u0631\u063A\u0646\u062F\u064A" },
+  { name: "\u0648\u0631\u062F\u064A \u0646\u0627\u0639\u0645", hex: "#DF7E9B", extraPrice: 0, defaultThreadHex: "#762b43", defaultThreadName: "\u0628\u0648\u0631\u063A\u0646\u062F\u064A" },
+  { name: "\u0628\u064A\u062C \u0643\u0631\u064A\u0645\u064A", hex: "#EFE6D5", extraPrice: 0, defaultThreadHex: "#762b43", defaultThreadName: "\u0628\u0648\u0631\u063A\u0646\u062F\u064A" },
+  { name: "\u0623\u0628\u064A\u0636 \u0646\u0627\u0635\u0639", hex: "#F9F9F7", extraPrice: 0, defaultThreadHex: "#762b43", defaultThreadName: "\u0628\u0648\u0631\u063A\u0646\u062F\u064A" }
+];
 const THREAD_COLORS = [
   { name: "\u0630\u0647\u0628\u064A \u0645\u0644\u0643\u064A", hex: "#d4af37", extraPrice: 0 },
   { name: "\u0641\u0636\u064A \u0644\u0624\u0644\u0624\u064A", hex: "#e2e8f0", extraPrice: 0 },
@@ -267,6 +287,7 @@ const DEFAULT_CAP_OPTION_PRICES = {
 };
 const DEFAULT_DYNAMIC_SETTINGS = {
   stoleColors: DEFAULT_STOLE_COLORS,
+  crepeStoleColors: CREPE_STOLE_COLORS,
   gownColors: DEFAULT_GOWN_COLORS,
   threadColors: THREAD_COLORS,
   capColors: CAP_SWATCHES,
@@ -626,6 +647,7 @@ export {
   CATEGORY_BRANCHES,
   CATEGORY_IMAGE_BG_PRESETS,
   CATEGORY_LABELS,
+  CREPE_STOLE_COLORS,
   DEFAULT_CAP_OPTION_PRICES,
   DEFAULT_CATEGORY_PAUSE_BADGE,
   DEFAULT_COPY,
