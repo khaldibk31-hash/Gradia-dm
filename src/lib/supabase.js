@@ -225,18 +225,33 @@ async function requestPasswordResetByEmail(email) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
     throw new Error("\u064A\u0631\u062C\u0649 \u0625\u062F\u062E\u0627\u0644 \u0628\u0631\u064A\u062F \u0625\u0644\u0643\u062A\u0631\u0648\u0646\u064A \u0635\u062D\u064A\u062D.");
   }
-  const redirectTo = typeof window !== "undefined" ? window.location.origin : void 0;
-  const { error } = await supabase.auth.resetPasswordForEmail(
-    cleanEmail,
-    redirectTo ? { redirectTo } : void 0
-  );
+  const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail);
   if (error) {
     const msg = String(error.message || "").toLowerCase();
     if (msg.includes("rate limit") || msg.includes("too many") || msg.includes("once every")) {
-      throw new Error("\u062A\u0645 \u0625\u0631\u0633\u0627\u0644 \u0637\u0644\u0628 \u0645\u0633\u0628\u0642\u0627\u064B. \u064A\u0631\u062C\u0649 \u0627\u0644\u0627\u0646\u062A\u0638\u0627\u0631 \u0642\u0644\u064A\u0644\u0627\u064B \u0642\u0628\u0644 \u0625\u0639\u0627\u062F\u0629 \u0627\u0644\u0645\u062D\u0627\u0648\u0644\u0629.");
+      throw new Error("\u062A\u0645 \u0625\u0631\u0633\u0627\u0644 \u0631\u0645\u0632 \u0627\u0644\u062A\u062D\u0642\u0642 \u0645\u0633\u0628\u0642\u0627\u064B. \u064A\u0631\u062C\u0649 \u0627\u0644\u0627\u0646\u062A\u0638\u0627\u0631 \u0642\u0644\u064A\u0644\u0627\u064B \u0642\u0628\u0644 \u0625\u0639\u0627\u062F\u0629 \u0627\u0644\u0645\u062D\u0627\u0648\u0644\u0629.");
     }
-    throw new Error(error.message || "\u062A\u0639\u0630\u0631 \u0625\u0631\u0633\u0627\u0644 \u0631\u0627\u0628\u0637 \u0625\u0639\u0627\u062F\u0629 \u0627\u0644\u062A\u0639\u064A\u064A\u0646.");
+    throw new Error(error.message || "\u062A\u0639\u0630\u0631 \u0625\u0631\u0633\u0627\u0644 \u0631\u0645\u0632 \u0627\u0644\u062A\u062D\u0642\u0642.");
   }
+}
+async function verifyPasswordResetEmailOtp(email, token) {
+  const cleanEmail = typeof email === "string" ? email.trim() : "";
+  const cleanToken = typeof token === "string" ? token.replace(/\D/g, "") : "";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    throw new Error("\u064A\u0631\u062C\u0649 \u0625\u062F\u062E\u0627\u0644 \u0628\u0631\u064A\u062F \u0625\u0644\u0643\u062A\u0631\u0648\u0646\u064A \u0635\u062D\u064A\u062D.");
+  }
+  if (!/^\d{6}$/.test(cleanToken)) {
+    throw new Error("\u064A\u0631\u062C\u0649 \u0625\u062F\u062E\u0627\u0644 \u0631\u0645\u0632 \u0627\u0644\u062A\u062D\u0642\u0642 \u0627\u0644\u0645\u0643\u0648\u0646 \u0645\u0646 6 \u0623\u0631\u0642\u0627\u0645.");
+  }
+  const { data, error } = await supabase.auth.verifyOtp({
+    email: cleanEmail,
+    token: cleanToken,
+    type: "recovery"
+  });
+  if (error) {
+    throw new Error("\u0631\u0645\u0632 \u0627\u0644\u062A\u062D\u0642\u0642 \u063A\u064A\u0631 \u0635\u062D\u064A\u062D \u0623\u0648 \u0645\u0646\u062A\u0647\u064A \u0627\u0644\u0635\u0644\u0627\u062D\u064A\u0629. \u064A\u0631\u062C\u0649 \u0627\u0644\u0645\u062D\u0627\u0648\u0644\u0629 \u0645\u0631\u0629 \u0623\u062E\u0631\u0649.");
+  }
+  return data?.session ?? null;
 }
 async function sendPasswordResetSmsOtp(rawPhone) {
   const normalizedPhone = normalizeAlgerianPhoneE164(rawPhone);
@@ -2095,6 +2110,7 @@ export {
   updateAdminEmail,
   updateAdminPassword,
   uploadStoreImage,
+  verifyPasswordResetEmailOtp,
   verifyPasswordResetSmsOtp,
   writeCachedDynamicSettings,
   writeCachedProducts

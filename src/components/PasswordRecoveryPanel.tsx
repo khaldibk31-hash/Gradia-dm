@@ -9,6 +9,7 @@ import {
   Loader2,
   Mail,
   MessageCircle,
+  RefreshCw,
   Smartphone,
 } from "lucide-react";
 import { WHATSAPP_NUMBER, formatWhatsAppNumber } from "../data/defaultStore";
@@ -17,10 +18,13 @@ import {
   requestPasswordResetByEmail,
   sendPasswordResetSmsOtp,
   updateAdminPassword,
+  verifyPasswordResetEmailOtp,
   verifyPasswordResetSmsOtp,
 } from "../lib/supabase";
 
 export type RecoveryChannel = "email" | "sms" | "whatsapp";
+
+const RESEND_COOLDOWN_SECONDS = 60;
 
 export interface PasswordRecoveryPanelProps {
   initialEmail?: string;
@@ -46,19 +50,27 @@ export function PasswordRecoveryPanel({
   const [step, setStep] = useState<"choose" | "new-password">(initialStep);
   const [channel, setChannel] = useState<RecoveryChannel>("email");
 
-  // Email recovery state
+  // Email direct 6-digit OTP + new password recovery state
   const [emailInput, setEmailInput] = useState(initialEmail);
+  const [emailStage, setEmailStage] = useState<"request" | "otp" | "done">("request");
+  const [emailOtpCode, setEmailOtpCode] = useState("");
+  const [emailNewPassword, setEmailNewPassword] = useState("");
+  const [showEmailNewPassword, setShowEmailNewPassword] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
+  const [emailSubmitting, setEmailSubmitting] = useState(false);
+  const [emailCooldown, setEmailCooldown] = useState(0);
   const [emailError, setEmailError] = useState("");
 
-  // SMS OTP recovery state
+  // SMS direct 6-digit OTP + new password recovery state
   const [smsPhone, setSmsPhone] = useState("");
   const [normalizedSmsPhone, setNormalizedSmsPhone] = useState("");
-  const [smsStage, setSmsStage] = useState<"phone" | "otp">("phone");
-  const [otpCode, setOtpCode] = useState("");
+  const [smsStage, setSmsStage] = useState<"phone" | "otp" | "done">("phone");
+  const [smsOtpCode, setSmsOtpCode] = useState("");
+  const [smsNewPassword, setSmsNewPassword] = useState("");
+  const [showSmsNewPassword, setShowSmsNewPassword] = useState(false);
   const [smsSending, setSmsSending] = useState(false);
-  const [smsVerifying, setSmsVerifying] = useState(false);
+  const [smsSubmitting, setSmsSubmitting] = useState(false);
+  const [smsCooldown, setSmsCooldown] = useState(0);
   const [smsError, setSmsError] = useState("");
   const [smsGatewayUnavailable, setSmsGatewayUnavailable] = useState(false);
 
@@ -67,7 +79,7 @@ export function PasswordRecoveryPanel({
   const [waEmail, setWaEmail] = useState(initialEmail);
   const [waError, setWaError] = useState("");
 
-  // New password form state
+  // Fallback new-password step state (for session recovery events)
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -88,6 +100,22 @@ export function PasswordRecoveryPanel({
       setWaEmail(initialEmail);
     }
   }, [initialEmail]);
+
+  useEffect(() => {
+    if (emailCooldown <= 0) return;
+    const timer = window.setInterval(() => {
+      setEmailCooldown((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [emailCooldown > 0]);
+
+  useEffect(() => {
+    if (smsCooldown <= 0) return;
+    const timer = window.setInterval(() => {
+      setSmsCooldown((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [smsCooldown > 0]);
 
   const liveNormalizedSmsPreview = useMemo(() => normalizeAlgerianPhoneE164(smsPhone), [smsPhone]);
 
@@ -110,21 +138,69 @@ export function PasswordRecoveryPanel({
     return `https://wa.me/${officialStoreWhatsApp}?text=${encodeURIComponent(lines.join("\n"))}`;
   }, [accountLabel, brandName, liveNormalizedWaPhone, officialStoreWhatsApp, waEmail, waPhone]);
 
-  const handleSendEmailReset = async (e: React.FormEvent) => {
+  const handleSendEmailOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setEmailError("");
-    setEmailSent(false);
     setEmailSending(true);
     try {
       await requestPasswordResetByEmail(emailInput);
-      setEmailSent(true);
-      onNotify?.("success", "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني بنجاح");
+      setEmailOtpCode("");
+      setEmailNewPassword("");
+      setEmailCooldown(RESEND_COOLDOWN_SECONDS);
+      setEmailStage("otp");
+      onNotify?.("success", "تم إرسال رمز التحقق المكون من 6 أرقام إلى بريدك الإلكتروني");
     } catch (err) {
       setEmailError(
-        err instanceof Error ? err.message : "تعذر إرسال رابط إعادة تعيين كلمة المرور.",
+        err instanceof Error ? err.message : "تعذر إرسال رمز التحقق إلى بريدك الإلكتروني.",
       );
     } finally {
       setEmailSending(false);
+    }
+  };
+
+  const handleResendEmailOtp = async () => {
+    if (emailCooldown > 0 || emailSending) return;
+    setEmailError("");
+    setEmailSending(true);
+    try {
+      await requestPasswordResetByEmail(emailInput);
+      setEmailCooldown(RESEND_COOLDOWN_SECONDS);
+      onNotify?.("success", "تم إعادة إرسال رمز التحقق إلى بريدك الإلكتروني");
+    } catch (err) {
+      setEmailError(err instanceof Error ? err.message : "تعذر إعادة إرسال رمز التحقق.");
+    } finally {
+      setEmailSending(false);
+    }
+  };
+
+  const handleVerifyEmailOtpAndResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailError("");
+    if (!/^\d{6}$/.test(emailOtpCode.trim())) {
+      setEmailError("يرجى إدخال رمز التحقق المكون من 6 أرقام.");
+      return;
+    }
+    if (emailNewPassword.length < 6) {
+      setEmailError("يجب أن تتكون كلمة المرور الجديدة من 6 أحرف على الأقل.");
+      return;
+    }
+    setEmailSubmitting(true);
+    try {
+      await verifyPasswordResetEmailOtp(emailInput, emailOtpCode);
+      await updateAdminPassword(emailNewPassword);
+      setEmailOtpCode("");
+      setEmailNewPassword("");
+      setEmailStage("done");
+      onNotify?.("success", "تم تغيير كلمة المرور بنجاح!");
+      onPasswordUpdated?.();
+    } catch (err) {
+      setEmailError(
+        err instanceof Error
+          ? err.message
+          : "تعذر التحقق من الرمز أو تحديث كلمة المرور. يرجى المحاولة مرة أخرى.",
+      );
+    } finally {
+      setEmailSubmitting(false);
     }
   };
 
@@ -136,6 +212,9 @@ export function PasswordRecoveryPanel({
     try {
       const normalized = await sendPasswordResetSmsOtp(smsPhone);
       setNormalizedSmsPhone(normalized);
+      setSmsOtpCode("");
+      setSmsNewPassword("");
+      setSmsCooldown(RESEND_COOLDOWN_SECONDS);
       setSmsStage("otp");
       onNotify?.("success", `تم إرسال رمز التحقق إلى ${normalized}`);
     } catch (err) {
@@ -152,18 +231,56 @@ export function PasswordRecoveryPanel({
     }
   };
 
-  const handleVerifySmsOtp = async (e: React.FormEvent) => {
+  const handleResendSmsOtp = async () => {
+    if (smsCooldown > 0 || smsSending) return;
+    setSmsError("");
+    setSmsGatewayUnavailable(false);
+    setSmsSending(true);
+    try {
+      const normalized = await sendPasswordResetSmsOtp(normalizedSmsPhone || smsPhone);
+      setNormalizedSmsPhone(normalized);
+      setSmsCooldown(RESEND_COOLDOWN_SECONDS);
+      onNotify?.("success", `تم إعادة إرسال رمز التحقق إلى ${normalized}`);
+    } catch (err) {
+      const code =
+        err && typeof err === "object" && "code" in err
+          ? String((err as { code?: string }).code || "")
+          : "";
+      if (code === "SMS_GATEWAY_NOT_CONFIGURED") {
+        setSmsGatewayUnavailable(true);
+      }
+      setSmsError(err instanceof Error ? err.message : "تعذر إعادة إرسال رمز التحقق.");
+    } finally {
+      setSmsSending(false);
+    }
+  };
+
+  const handleVerifySmsOtpAndResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setSmsError("");
-    setSmsVerifying(true);
+    if (!/^\d{6}$/.test(smsOtpCode.trim())) {
+      setSmsError("يرجى إدخال رمز التحقق المكون من 6 أرقام.");
+      return;
+    }
+    if (smsNewPassword.length < 6) {
+      setSmsError("يجب أن تتكون كلمة المرور الجديدة من 6 أحرف على الأقل.");
+      return;
+    }
+    setSmsSubmitting(true);
     try {
-      await verifyPasswordResetSmsOtp(normalizedSmsPhone || smsPhone, otpCode);
-      setStep("new-password");
-      onNotify?.("success", "تم التحقق بنجاح! يمكنك الآن تعيين كلمة مرور جديدة.");
+      await verifyPasswordResetSmsOtp(normalizedSmsPhone || smsPhone, smsOtpCode);
+      await updateAdminPassword(smsNewPassword);
+      setSmsOtpCode("");
+      setSmsNewPassword("");
+      setSmsStage("done");
+      onNotify?.("success", "تم تغيير كلمة المرور بنجاح!");
+      onPasswordUpdated?.();
     } catch (err) {
-      setSmsError(err instanceof Error ? err.message : "رمز التحقق غير صحيح أو منتهي الصلاحية.");
+      setSmsError(
+        err instanceof Error ? err.message : "رمز التحقق غير صحيح أو تعذر تحديث كلمة المرور.",
+      );
     } finally {
-      setSmsVerifying(false);
+      setSmsSubmitting(false);
     }
   };
 
@@ -184,7 +301,7 @@ export function PasswordRecoveryPanel({
       setPasswordUpdated(true);
       setNewPassword("");
       setConfirmPassword("");
-      onNotify?.("success", "تم تحديث كلمة المرور بنجاح!");
+      onNotify?.("success", "تم تغيير كلمة المرور بنجاح!");
       onPasswordUpdated?.();
     } catch (err) {
       setPasswordError(err instanceof Error ? err.message : "تعذر تحديث كلمة المرور.");
@@ -218,7 +335,7 @@ export function PasswordRecoveryPanel({
         {passwordUpdated ? (
           <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 space-y-3 text-center">
             <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
-            <p className="text-sm font-bold text-emerald-900">تم تحديث كلمة المرور بنجاح</p>
+            <p className="text-sm font-bold text-emerald-900">تم تغيير كلمة المرور بنجاح!</p>
             <button
               type="button"
               onClick={onBackToLogin}
@@ -404,66 +521,194 @@ export function PasswordRecoveryPanel({
         </button>
       </div>
 
-      {/* Option A: Email Recovery */}
+      {/* Option A: Direct 6-Digit Email OTP + New Password */}
       {channel === "email" && (
-        <form onSubmit={handleSendEmailReset} className="space-y-3">
-          <div>
-            <label
-              htmlFor="recovery-email-input"
-              className="block text-xs font-bold text-[#1A1617] mb-1"
-            >
-              البريد الإلكتروني المسجّل
-            </label>
-            <input
-              id="recovery-email-input"
-              type="email"
-              dir="ltr"
-              autoComplete="email"
-              value={emailInput}
-              onChange={(e) => {
-                setEmailInput(e.target.value);
-                if (emailError) setEmailError("");
-                if (emailSent) setEmailSent(false);
-              }}
-              placeholder="name@example.com"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[#C6A355]/45 bg-[#FAF8F5] text-sm text-[#1A1617] text-left focus:outline-none focus:border-[#5E1734]"
-            />
-          </div>
-
-          {emailError && <p className="text-xs font-semibold text-[#BE123C]">{emailError}</p>}
-
-          {emailSent && (
-            <div
-              role="status"
-              className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 space-y-1 text-emerald-900"
-            >
-              <div className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <p className="text-xs font-bold leading-relaxed">
-                  تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني بنجاح
-                </p>
+        <div className="space-y-3">
+          {emailStage === "request" && (
+            <form onSubmit={handleSendEmailOtp} className="space-y-3">
+              <div>
+                <label
+                  htmlFor="recovery-email-input"
+                  className="block text-xs font-bold text-[#1A1617] mb-1"
+                >
+                  البريد الإلكتروني المسجّل
+                </label>
+                <input
+                  id="recovery-email-input"
+                  type="email"
+                  dir="ltr"
+                  autoComplete="email"
+                  value={emailInput}
+                  onChange={(e) => {
+                    setEmailInput(e.target.value);
+                    if (emailError) setEmailError("");
+                  }}
+                  placeholder="name@example.com"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#C6A355]/45 bg-[#FAF8F5] text-sm text-[#1A1617] text-left focus:outline-none focus:border-[#5E1734]"
+                />
               </div>
-              <p className="text-[11px] text-emerald-800 leading-relaxed pr-6">
-                افتح الرسالة واضغط على الرابط لتظهر لك نافذة تعيين كلمة المرور الجديدة تلقائياً.
-              </p>
-            </div>
+
+              {emailError && (
+                <p role="alert" className="text-xs font-semibold text-[#BE123C]">
+                  {emailError}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={emailSending}
+                className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#5E1734] hover:bg-[#4A1129] text-white text-sm font-bold disabled:opacity-60 cursor-pointer transition-colors"
+              >
+                {emailSending && <Loader2 className="w-4 h-4 animate-spin" />}
+                <span>{emailSending ? "جاري الإرسال..." : "إرسال رمز التحقق"}</span>
+              </button>
+            </form>
           )}
 
-          <button
-            type="submit"
-            disabled={emailSending}
-            className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#5E1734] hover:bg-[#4A1129] text-white text-sm font-bold disabled:opacity-60 cursor-pointer transition-colors"
-          >
-            {emailSending && <Loader2 className="w-4 h-4 animate-spin" />}
-            <span>{emailSending ? "جاري الإرسال..." : "إرسال رابط إعادة التعيين"}</span>
-          </button>
-        </form>
+          {emailStage === "otp" && (
+            <form onSubmit={handleVerifyEmailOtpAndResetPassword} className="space-y-3">
+              <div className="rounded-xl bg-[#FAF8F5] border border-[#C6A355]/35 p-3 space-y-1">
+                <p className="text-xs font-extrabold text-[#5E1734]">
+                  أدخل رمز التحقق (6 أرقام) وكلمة المرور الجديدة
+                </p>
+                <p className="text-[11px] text-[#65525A]">
+                  تم إرسال رمز التحقق إلى{" "}
+                  <span dir="ltr" className="font-bold text-[#1A1617]">
+                    {emailInput.trim()}
+                  </span>
+                </p>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="recovery-email-otp"
+                  className="block text-xs font-bold text-[#1A1617] mb-1"
+                >
+                  رمز التحقق (6 أرقام)
+                </label>
+                <input
+                  id="recovery-email-otp"
+                  type="text"
+                  inputMode="numeric"
+                  dir="ltr"
+                  maxLength={6}
+                  autoComplete="one-time-code"
+                  value={emailOtpCode}
+                  onChange={(e) => {
+                    setEmailOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+                    if (emailError) setEmailError("");
+                  }}
+                  placeholder="123456"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#C6A355]/45 bg-[#FAF8F5] text-base font-extrabold tracking-[0.35em] text-center text-[#1A1617] focus:outline-none focus:border-[#5E1734]"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="recovery-email-new-password"
+                  className="block text-xs font-bold text-[#1A1617] mb-1"
+                >
+                  كلمة المرور الجديدة
+                </label>
+                <div className="relative">
+                  <input
+                    id="recovery-email-new-password"
+                    type={showEmailNewPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    value={emailNewPassword}
+                    onChange={(e) => {
+                      setEmailNewPassword(e.target.value);
+                      if (emailError) setEmailError("");
+                    }}
+                    placeholder="6 أحرف على الأقل"
+                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-[#C6A355]/45 bg-[#FAF8F5] text-sm text-[#1A1617] focus:outline-none focus:border-[#5E1734]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEmailNewPassword((prev) => !prev)}
+                    aria-label={showEmailNewPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#65525A] hover:text-[#5E1734] cursor-pointer"
+                  >
+                    {showEmailNewPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {emailError && (
+                <p role="alert" className="text-xs font-semibold text-[#BE123C]">
+                  {emailError}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={emailSubmitting}
+                className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#5E1734] hover:bg-[#4A1129] text-white text-sm font-bold disabled:opacity-60 cursor-pointer transition-colors"
+              >
+                {emailSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                <span>
+                  {emailSubmitting ? "جاري التحقق والتحديث..." : "تأكيد الرمز وتغيير كلمة المرور"}
+                </span>
+              </button>
+
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <button
+                  type="button"
+                  disabled={emailCooldown > 0 || emailSending}
+                  onClick={handleResendEmailOtp}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#5E1734] hover:text-[#4A1129] disabled:text-[#8E7D84] disabled:cursor-not-allowed cursor-pointer transition-colors"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${emailSending ? "animate-spin" : ""}`} />
+                  <span>
+                    {emailCooldown > 0
+                      ? `إعادة إرسال الرمز (${emailCooldown} ثانية)`
+                      : "إعادة إرسال الرمز"}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmailStage("request");
+                    setEmailOtpCode("");
+                    setEmailNewPassword("");
+                    setEmailError("");
+                  }}
+                  className="text-xs font-bold text-[#65525A] hover:text-[#5E1734] cursor-pointer"
+                >
+                  تغيير البريد الإلكتروني
+                </button>
+              </div>
+            </form>
+          )}
+
+          {emailStage === "done" && (
+            <div
+              role="status"
+              className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 space-y-3 text-center"
+            >
+              <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+              <p className="text-sm font-bold text-emerald-900">تم تغيير كلمة المرور بنجاح!</p>
+              <button
+                type="button"
+                onClick={onBackToLogin}
+                className="w-full py-2.5 px-4 rounded-xl bg-[#5E1734] hover:bg-[#4A1129] text-white text-xs font-bold cursor-pointer transition-colors"
+              >
+                العودة لتسجيل الدخول
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
-      {/* Option B: SMS OTP Recovery */}
+      {/* Option B: Direct 6-Digit SMS OTP + New Password */}
       {channel === "sms" && (
         <div className="space-y-3">
-          {smsStage === "phone" ? (
+          {smsStage === "phone" && (
             <form onSubmit={handleSendSmsOtp} className="space-y-3">
               <div>
                 <label
@@ -536,13 +781,20 @@ export function PasswordRecoveryPanel({
                 <span>{smsSending ? "جاري إرسال الرمز..." : "إرسال رمز التحقق (SMS)"}</span>
               </button>
             </form>
-          ) : (
-            <form onSubmit={handleVerifySmsOtp} className="space-y-3">
-              <div className="rounded-xl bg-[#FAF8F5] border border-[#C6A355]/30 p-3 text-xs text-[#65525A]">
-                أدخل رمز التحقق المكون من 6 أرقام المرسل إلى{" "}
-                <span dir="ltr" className="font-bold text-[#1A1617]">
-                  {normalizedSmsPhone}
-                </span>
+          )}
+
+          {smsStage === "otp" && (
+            <form onSubmit={handleVerifySmsOtpAndResetPassword} className="space-y-3">
+              <div className="rounded-xl bg-[#FAF8F5] border border-[#C6A355]/35 p-3 space-y-1">
+                <p className="text-xs font-extrabold text-[#5E1734]">
+                  أدخل رمز التحقق (6 أرقام) وكلمة المرور الجديدة
+                </p>
+                <p className="text-[11px] text-[#65525A]">
+                  تم إرسال رمز التحقق إلى{" "}
+                  <span dir="ltr" className="font-bold text-[#1A1617]">
+                    {normalizedSmsPhone}
+                  </span>
+                </p>
               </div>
 
               <div>
@@ -559,9 +811,9 @@ export function PasswordRecoveryPanel({
                   dir="ltr"
                   maxLength={6}
                   autoComplete="one-time-code"
-                  value={otpCode}
+                  value={smsOtpCode}
                   onChange={(e) => {
-                    setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+                    setSmsOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6));
                     if (smsError) setSmsError("");
                   }}
                   placeholder="123456"
@@ -569,29 +821,104 @@ export function PasswordRecoveryPanel({
                 />
               </div>
 
-              {smsError && <p className="text-xs font-semibold text-[#BE123C]">{smsError}</p>}
+              <div>
+                <label
+                  htmlFor="recovery-sms-new-password"
+                  className="block text-xs font-bold text-[#1A1617] mb-1"
+                >
+                  كلمة المرور الجديدة
+                </label>
+                <div className="relative">
+                  <input
+                    id="recovery-sms-new-password"
+                    type={showSmsNewPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    value={smsNewPassword}
+                    onChange={(e) => {
+                      setSmsNewPassword(e.target.value);
+                      if (smsError) setSmsError("");
+                    }}
+                    placeholder="6 أحرف على الأقل"
+                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-[#C6A355]/45 bg-[#FAF8F5] text-sm text-[#1A1617] focus:outline-none focus:border-[#5E1734]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowSmsNewPassword((prev) => !prev)}
+                    aria-label={showSmsNewPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#65525A] hover:text-[#5E1734] cursor-pointer"
+                  >
+                    {showSmsNewPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {smsError && (
+                <p role="alert" className="text-xs font-semibold text-[#BE123C]">
+                  {smsError}
+                </p>
+              )}
 
               <button
                 type="submit"
-                disabled={smsVerifying}
+                disabled={smsSubmitting}
                 className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#5E1734] hover:bg-[#4A1129] text-white text-sm font-bold disabled:opacity-60 cursor-pointer transition-colors"
               >
-                {smsVerifying && <Loader2 className="w-4 h-4 animate-spin" />}
-                <span>{smsVerifying ? "جاري التحقق..." : "تأكيد الرمز"}</span>
+                {smsSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                <span>
+                  {smsSubmitting ? "جاري التحقق والتحديث..." : "تأكيد الرمز وتغيير كلمة المرور"}
+                </span>
               </button>
 
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <button
+                  type="button"
+                  disabled={smsCooldown > 0 || smsSending}
+                  onClick={handleResendSmsOtp}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#5E1734] hover:text-[#4A1129] disabled:text-[#8E7D84] disabled:cursor-not-allowed cursor-pointer transition-colors"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${smsSending ? "animate-spin" : ""}`} />
+                  <span>
+                    {smsCooldown > 0
+                      ? `إعادة إرسال الرمز (${smsCooldown} ثانية)`
+                      : "إعادة إرسال الرمز"}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSmsStage("phone");
+                    setSmsOtpCode("");
+                    setSmsNewPassword("");
+                    setSmsError("");
+                  }}
+                  className="text-xs font-bold text-[#65525A] hover:text-[#5E1734] cursor-pointer"
+                >
+                  تغيير رقم الهاتف
+                </button>
+              </div>
+            </form>
+          )}
+
+          {smsStage === "done" && (
+            <div
+              role="status"
+              className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 space-y-3 text-center"
+            >
+              <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+              <p className="text-sm font-bold text-emerald-900">تم تغيير كلمة المرور بنجاح!</p>
               <button
                 type="button"
-                onClick={() => {
-                  setSmsStage("phone");
-                  setOtpCode("");
-                  setSmsError("");
-                }}
-                className="w-full py-1.5 text-xs font-bold text-[#65525A] hover:text-[#5E1734] cursor-pointer"
+                onClick={onBackToLogin}
+                className="w-full py-2.5 px-4 rounded-xl bg-[#5E1734] hover:bg-[#4A1129] text-white text-xs font-bold cursor-pointer transition-colors"
               >
-                تغيير رقم الهاتف
+                العودة لتسجيل الدخول
               </button>
-            </form>
+            </div>
           )}
         </div>
       )}

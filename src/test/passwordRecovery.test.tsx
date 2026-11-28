@@ -1,11 +1,15 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminLoginModal } from "@/components/AdminModals";
 import { normalizeAlgerianPhoneE164, supabase } from "@/lib/supabase";
 
-describe("Password Recovery Flow (Email, SMS, WhatsApp)", () => {
+describe("Password Recovery Flow (Direct 6-Digit Email & SMS OTP + WhatsApp)", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("normalizes Algerian phone numbers to E.164 +213 format", () => {
@@ -36,63 +40,75 @@ describe("Password Recovery Flow (Email, SMS, WhatsApp)", () => {
     expect(screen.queryByText(/تليجرام|Telegram/i)).toBeNull();
   });
 
-  it("sends password reset link via Email and handles recovery new-password session", async () => {
+  it("completes Email 6-digit OTP + new password reset in-modal with 60s resend cooldown", async () => {
     const resetSpy = vi
       .spyOn(supabase.auth, "resetPasswordForEmail")
       .mockResolvedValue({ data: {}, error: null } as never);
+    const verifySpy = vi
+      .spyOn(supabase.auth, "verifyOtp")
+      .mockResolvedValue({ data: { session: {} }, error: null } as never);
     const updateSpy = vi
       .spyOn(supabase.auth, "updateUser")
       .mockResolvedValue({ data: { user: {} }, error: null } as never);
 
     const Modal = AdminLoginModal as unknown as React.ComponentType<Record<string, unknown>>;
-    const { rerender } = render(
-      <Modal isOpen={true} onClose={() => {}} onLogin={async () => {}} />,
-    );
+    render(<Modal isOpen={true} onClose={() => {}} onLogin={async () => {}} />);
 
     fireEvent.click(screen.getByRole("button", { name: "نسيت كلمة المرور؟" }));
 
     const emailInput = screen.getByLabelText("البريد الإلكتروني المسجّل") as HTMLInputElement;
     expect(emailInput.value).toBe("khaldibk31@gmail.com");
 
-    fireEvent.click(screen.getByRole("button", { name: "إرسال رابط إعادة التعيين" }));
+    vi.useFakeTimers({ shouldAdvanceTime: true });
 
-    await waitFor(() => {
-      expect(resetSpy).toHaveBeenCalledWith("khaldibk31@gmail.com", {
-        redirectTo: window.location.origin,
-      });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "إرسال رمز التحقق" }));
     });
 
-    expect(
-      await screen.findByText("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني بنجاح"),
-    ).toBeInTheDocument();
+    expect(resetSpy).toHaveBeenCalledWith("khaldibk31@gmail.com");
+    expect(screen.getByText("أدخل رمز التحقق (6 أرقام) وكلمة المرور الجديدة")).toBeInTheDocument();
 
-    // Simulate returning from email link (PASSWORD_RECOVERY session detected)
-    rerender(
-      <Modal
-        isOpen={true}
-        onClose={() => {}}
-        onLogin={async () => {}}
-        forcePasswordRecovery={true}
-      />,
-    );
+    // Resend button starts with 60-second cooldown
+    const resendCooldownBtn = screen.getByRole("button", { name: /إعادة إرسال الرمز/ });
+    expect(resendCooldownBtn).toBeDisabled();
+    expect(resendCooldownBtn.textContent).toContain("60");
 
-    expect(await screen.findByText("تعيين كلمة مرور جديدة")).toBeInTheDocument();
+    // Advance 60 seconds and verify resend becomes active and calls resetPasswordForEmail again
+    await act(async () => {
+      vi.advanceTimersByTime(60_000);
+    });
+    const resendReadyBtn = screen.getByRole("button", { name: "إعادة إرسال الرمز" });
+    expect(resendReadyBtn).not.toBeDisabled();
+
+    await act(async () => {
+      fireEvent.click(resendReadyBtn);
+    });
+    expect(resetSpy).toHaveBeenCalledTimes(2);
+
+    vi.useRealTimers();
+
+    // Enter 6-digit OTP + new password
+    fireEvent.change(screen.getByLabelText("رمز التحقق (6 أرقام)"), {
+      target: { value: "123456" },
+    });
     fireEvent.change(screen.getByLabelText("كلمة المرور الجديدة"), {
       target: { value: "NewStrongPass2026" },
     });
-    fireEvent.change(screen.getByLabelText("تأكيد كلمة المرور الجديدة"), {
-      target: { value: "NewStrongPass2026" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "حفظ كلمة المرور الجديدة" }));
+    fireEvent.click(screen.getByRole("button", { name: "تأكيد الرمز وتغيير كلمة المرور" }));
 
     await waitFor(() => {
+      expect(verifySpy).toHaveBeenCalledWith({
+        email: "khaldibk31@gmail.com",
+        token: "123456",
+        type: "recovery",
+      });
       expect(updateSpy).toHaveBeenCalledWith({ password: "NewStrongPass2026" });
     });
 
-    expect(await screen.findByText("تم تحديث كلمة المرور بنجاح")).toBeInTheDocument();
+    expect(await screen.findByText("تم تغيير كلمة المرور بنجاح!")).toBeInTheDocument();
   });
 
-  it("supports SMS OTP flow and displays polite WhatsApp/Email fallback when SMS gateway is unconfigured", async () => {
+  it("supports SMS 6-digit OTP + new password flow and polite WhatsApp fallback when SMS gateway is unconfigured", async () => {
     const otpSpy = vi
       .spyOn(supabase.auth, "signInWithOtp")
       .mockResolvedValueOnce({
@@ -104,6 +120,9 @@ describe("Password Recovery Flow (Email, SMS, WhatsApp)", () => {
     const verifySpy = vi
       .spyOn(supabase.auth, "verifyOtp")
       .mockResolvedValue({ data: { session: {} }, error: null } as never);
+    const updateSpy = vi
+      .spyOn(supabase.auth, "updateUser")
+      .mockResolvedValue({ data: { user: {} }, error: null } as never);
 
     const Modal = AdminLoginModal as unknown as React.ComponentType<Record<string, unknown>>;
     render(
@@ -132,7 +151,7 @@ describe("Password Recovery Flow (Email, SMS, WhatsApp)", () => {
     expect(waLink.getAttribute("href")).toContain("https://wa.me/213673423172?text=");
     expect(decodeURIComponent(waLink.getAttribute("href") || "")).toContain("+213550123456");
 
-    // Switch back to SMS and test successful 6-digit OTP verification -> new password form
+    // Switch back to SMS and test 6-digit OTP + new password submission in-modal
     fireEvent.click(screen.getByRole("tab", { name: "رسالة نصية" }));
     fireEvent.click(screen.getByRole("button", { name: "إرسال رمز التحقق (SMS)" }));
 
@@ -140,18 +159,59 @@ describe("Password Recovery Flow (Email, SMS, WhatsApp)", () => {
       expect(otpSpy).toHaveBeenLastCalledWith({ phone: "+213550123456" });
     });
 
-    const otpInput = await screen.findByLabelText("رمز التحقق (6 أرقام)");
-    fireEvent.change(otpInput, { target: { value: "123456" } });
-    fireEvent.click(screen.getByRole("button", { name: "تأكيد الرمز" }));
+    expect(
+      await screen.findByText("أدخل رمز التحقق (6 أرقام) وكلمة المرور الجديدة"),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /إعادة إرسال الرمز/ })).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("رمز التحقق (6 أرقام)"), {
+      target: { value: "654321" },
+    });
+    fireEvent.change(screen.getByLabelText("كلمة المرور الجديدة"), {
+      target: { value: "SmsNewPass2026" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "تأكيد الرمز وتغيير كلمة المرور" }));
 
     await waitFor(() => {
       expect(verifySpy).toHaveBeenCalledWith({
         phone: "+213550123456",
-        token: "123456",
+        token: "654321",
         type: "sms",
       });
+      expect(updateSpy).toHaveBeenCalledWith({ password: "SmsNewPass2026" });
     });
 
+    expect(await screen.findByText("تم تغيير كلمة المرور بنجاح!")).toBeInTheDocument();
+  });
+
+  it("still handles PASSWORD_RECOVERY auth event fallback screen cleanly", async () => {
+    const updateSpy = vi
+      .spyOn(supabase.auth, "updateUser")
+      .mockResolvedValue({ data: { user: {} }, error: null } as never);
+
+    const Modal = AdminLoginModal as unknown as React.ComponentType<Record<string, unknown>>;
+    render(
+      <Modal
+        isOpen={true}
+        onClose={() => {}}
+        onLogin={async () => {}}
+        forcePasswordRecovery={true}
+      />,
+    );
+
     expect(await screen.findByText("تعيين كلمة مرور جديدة")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("كلمة المرور الجديدة"), {
+      target: { value: "RecoveryLinkPass2026" },
+    });
+    fireEvent.change(screen.getByLabelText("تأكيد كلمة المرور الجديدة"), {
+      target: { value: "RecoveryLinkPass2026" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "حفظ كلمة المرور الجديدة" }));
+
+    await waitFor(() => {
+      expect(updateSpy).toHaveBeenCalledWith({ password: "RecoveryLinkPass2026" });
+    });
+
+    expect(await screen.findByText("تم تغيير كلمة المرور بنجاح!")).toBeInTheDocument();
   });
 });
