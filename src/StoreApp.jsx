@@ -194,6 +194,7 @@ function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isTrackingOpen, setIsTrackingOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isPasswordRecoveryMode, setIsPasswordRecoveryMode] = useState(false);
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
   const [productModalState, setProductModalState] = useState({
@@ -294,12 +295,21 @@ function App() {
   }, [cart]);
   useEffect(() => {
     let active = true;
+    const hasRecoveryUrlParams = typeof window !== "undefined" && (window.location.hash.includes("type=recovery") || new URLSearchParams(window.location.search).get("type") === "recovery");
+    if (hasRecoveryUrlParams) {
+      setIsPasswordRecoveryMode(true);
+      openAppModal("login");
+    }
     loadStoreState().then(async ({ state, session, error }) => {
       if (!active) return;
       setStoreState(state);
       const authed = Boolean(session);
       setIsAdminAuthenticated(authed);
       setIsAdminMode(authed);
+      if (hasRecoveryUrlParams && session) {
+        setIsPasswordRecoveryMode(true);
+        openAppModal("login");
+      }
       if (error) {
         console.warn("Store load note:", error);
       }
@@ -391,17 +401,21 @@ function App() {
       });
     });
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         const authed = Boolean(session);
         setIsAdminAuthenticated(authed);
         setIsAdminMode(authed);
+        if (event === "PASSWORD_RECOVERY") {
+          setIsPasswordRecoveryMode(true);
+          openAppModal("login");
+        }
       }
     );
     return () => {
       active = false;
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [openAppModal]);
   const triggerIncomingOrderAlert = useCallback(
     (orderNumber, orderId) => {
       if (orderId && lastNotifiedOrderIdRef.current === orderId) return;
@@ -2582,8 +2596,22 @@ function App() {
           AdminLoginModal,
           {
             isOpen: isLoginOpen,
-            onClose: () => closeAppModal("login"),
-            onLogin: handleAdminLogin
+            onClose: () => {
+              setIsPasswordRecoveryMode(false);
+              closeAppModal("login");
+            },
+            onLogin: handleAdminLogin,
+            whatsappNumber: storeWhatsappNumber,
+            brandName: storeState.copy.brandName,
+            forcePasswordRecovery: isPasswordRecoveryMode,
+            onPasswordRecoveryComplete: () => {
+              setIsPasswordRecoveryMode(false);
+              if (typeof window !== "undefined" && (window.location.hash.includes("type=recovery") || window.location.search.includes("type=recovery"))) {
+                const cleanUrl = `${window.location.pathname}${window.location.search.replace(/([?&])type=recovery(&|$)/, "$1").replace(/[?&]$/, "")}`;
+                window.history.replaceState(window.history.state || {}, "", cleanUrl);
+              }
+            },
+            onNotify: notify
           }
         ),
         /* @__PURE__ */ jsx(

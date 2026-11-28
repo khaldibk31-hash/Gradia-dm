@@ -143,7 +143,11 @@ async function signOutAdmin() {
   }
 }
 async function updateAdminPassword(newPassword) {
-  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  const clean = typeof newPassword === "string" ? newPassword : "";
+  if (clean.length < 6) {
+    throw new Error("\u064A\u062C\u0628 \u0623\u0646 \u062A\u062A\u0643\u0648\u0646 \u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631 \u0645\u0646 6 \u0623\u062D\u0631\u0641 \u0639\u0644\u0649 \u0627\u0644\u0623\u0642\u0644.");
+  }
+  const { error } = await supabase.auth.updateUser({ password: clean });
   if (error) {
     throw new Error(error.message);
   }
@@ -153,6 +157,123 @@ async function updateAdminEmail(newEmail) {
   if (error) {
     throw new Error(error.message);
   }
+}
+function normalizeAlgerianPhoneE164(raw) {
+  if (typeof raw !== "string") return "";
+  let cleaned = raw.trim().replace(/[\s().-]+/g, "");
+  if (!cleaned) return "";
+  if (cleaned.startsWith("00")) {
+    cleaned = `+${cleaned.slice(2)}`;
+  }
+  if (cleaned.startsWith("+")) {
+    const digitsAfterPlus = cleaned.slice(1).replace(/\D/g, "");
+    if (!digitsAfterPlus) return "";
+    if (digitsAfterPlus.startsWith("2130") && digitsAfterPlus.length >= 13) {
+      const normalizedDz = `+213${digitsAfterPlus.slice(4)}`;
+      return /^\+213[567]\d{8}$/.test(normalizedDz) ? normalizedDz : "";
+    }
+    if (digitsAfterPlus.startsWith("213")) {
+      const normalizedDz = `+${digitsAfterPlus}`;
+      return /^\+213[567]\d{8}$/.test(normalizedDz) ? normalizedDz : "";
+    }
+    return /^\+[1-9]\d{7,14}$/.test(`+${digitsAfterPlus}`) ? `+${digitsAfterPlus}` : "";
+  }
+  const digits = cleaned.replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.startsWith("2130") && digits.length >= 13) {
+    const normalizedDz = `+213${digits.slice(4)}`;
+    return /^\+213[567]\d{8}$/.test(normalizedDz) ? normalizedDz : "";
+  }
+  if (digits.startsWith("213")) {
+    const normalizedDz = `+${digits}`;
+    return /^\+213[567]\d{8}$/.test(normalizedDz) ? normalizedDz : "";
+  }
+  if (/^0[567]\d{8}$/.test(digits)) {
+    return `+213${digits.slice(1)}`;
+  }
+  if (/^[567]\d{8}$/.test(digits)) {
+    return `+213${digits}`;
+  }
+  return "";
+}
+function isSmsGatewayNotConfiguredError(error) {
+  const msg = String(error?.message || "").toLowerCase();
+  const code = String(error?.code || "").toLowerCase();
+  const status = Number(error?.status || 0);
+  if (
+    code === "phone_provider_disabled" ||
+    code === "sms_send_failed" ||
+    code === "otp_disabled" ||
+    code === "validation_failed" && (msg.includes("phone") || msg.includes("sms"))
+  ) {
+    return true;
+  }
+  if (
+    msg.includes("phone") && (msg.includes("provider") || msg.includes("disabled") || msg.includes("unsupported") || msg.includes("not configured") || msg.includes("not enabled") || msg.includes("signup")) ||
+    msg.includes("sms") && (msg.includes("provider") || msg.includes("disabled") || msg.includes("not configured") || msg.includes("failed") || msg.includes("twilio") || msg.includes("vonage") || msg.includes("messagebird")) ||
+    msg.includes("unsupported phone provider")
+  ) {
+    return true;
+  }
+  if ((status === 400 || status === 422 || status === 501) && (msg.includes("phone") || msg.includes("sms"))) {
+    return true;
+  }
+  return false;
+}
+async function requestPasswordResetByEmail(email) {
+  const cleanEmail = typeof email === "string" ? email.trim() : "";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    throw new Error("\u064A\u0631\u062C\u0649 \u0625\u062F\u062E\u0627\u0644 \u0628\u0631\u064A\u062F \u0625\u0644\u0643\u062A\u0631\u0648\u0646\u064A \u0635\u062D\u064A\u062D.");
+  }
+  const redirectTo = typeof window !== "undefined" ? window.location.origin : void 0;
+  const { error } = await supabase.auth.resetPasswordForEmail(
+    cleanEmail,
+    redirectTo ? { redirectTo } : void 0
+  );
+  if (error) {
+    const msg = String(error.message || "").toLowerCase();
+    if (msg.includes("rate limit") || msg.includes("too many") || msg.includes("once every")) {
+      throw new Error("\u062A\u0645 \u0625\u0631\u0633\u0627\u0644 \u0637\u0644\u0628 \u0645\u0633\u0628\u0642\u0627\u064B. \u064A\u0631\u062C\u0649 \u0627\u0644\u0627\u0646\u062A\u0638\u0627\u0631 \u0642\u0644\u064A\u0644\u0627\u064B \u0642\u0628\u0644 \u0625\u0639\u0627\u062F\u0629 \u0627\u0644\u0645\u062D\u0627\u0648\u0644\u0629.");
+    }
+    throw new Error(error.message || "\u062A\u0639\u0630\u0631 \u0625\u0631\u0633\u0627\u0644 \u0631\u0627\u0628\u0637 \u0625\u0639\u0627\u062F\u0629 \u0627\u0644\u062A\u0639\u064A\u064A\u0646.");
+  }
+}
+async function sendPasswordResetSmsOtp(rawPhone) {
+  const normalizedPhone = normalizeAlgerianPhoneE164(rawPhone);
+  if (!normalizedPhone) {
+    throw new Error("\u064A\u0631\u062C\u0649 \u0625\u062F\u062E\u0627\u0644 \u0631\u0642\u0645 \u0647\u0627\u062A\u0641 \u062C\u0632\u0627\u0626\u0631\u064A \u0635\u062D\u064A\u062D (\u0645\u062B\u0627\u0644: 0550123456 \u0623\u0648 +213550123456).");
+  }
+  const { error } = await supabase.auth.signInWithOtp({
+    phone: normalizedPhone
+  });
+  if (error) {
+    if (isSmsGatewayNotConfiguredError(error)) {
+      const gatewayError = new Error("\u062E\u062F\u0645\u0629 \u0627\u0644\u0631\u0633\u0627\u0626\u0644 \u0627\u0644\u0646\u0635\u064A\u0629 (SMS) \u063A\u064A\u0631 \u0645\u0641\u0639\u0651\u0644\u0629 \u062D\u0627\u0644\u064A\u0627\u064B. \u064A\u0645\u0643\u0646\u0643 \u0627\u0644\u0627\u0646\u062A\u0642\u0627\u0644 \u0625\u0644\u0649 \u0627\u0644\u0627\u0633\u062A\u0631\u062F\u0627\u062F \u0639\u0628\u0631 \u0648\u0627\u062A\u0633\u0627\u0628 \u0623\u0648 \u0627\u0644\u0628\u0631\u064A\u062F \u0627\u0644\u0625\u0644\u0643\u062A\u0631\u0648\u0646\u064A.");
+      gatewayError.code = "SMS_GATEWAY_NOT_CONFIGURED";
+      throw gatewayError;
+    }
+    throw new Error(error.message || "\u062A\u0639\u0630\u0631 \u0625\u0631\u0633\u0627\u0644 \u0631\u0645\u0632 \u0627\u0644\u062A\u062D\u0642\u0642 \u0639\u0628\u0631 SMS.");
+  }
+  return normalizedPhone;
+}
+async function verifyPasswordResetSmsOtp(rawPhone, token) {
+  const normalizedPhone = normalizeAlgerianPhoneE164(rawPhone);
+  const cleanToken = typeof token === "string" ? token.replace(/\D/g, "") : "";
+  if (!normalizedPhone) {
+    throw new Error("\u0631\u0642\u0645 \u0627\u0644\u0647\u0627\u062A\u0641 \u063A\u064A\u0631 \u0635\u062D\u064A\u062D.");
+  }
+  if (!/^\d{6}$/.test(cleanToken)) {
+    throw new Error("\u064A\u0631\u062C\u0649 \u0625\u062F\u062E\u0627\u0644 \u0631\u0645\u0632 \u0627\u0644\u062A\u062D\u0642\u0642 \u0627\u0644\u0645\u0643\u0648\u0646 \u0645\u0646 6 \u0623\u0631\u0642\u0627\u0645.");
+  }
+  const { data, error } = await supabase.auth.verifyOtp({
+    phone: normalizedPhone,
+    token: cleanToken,
+    type: "sms"
+  });
+  if (error) {
+    throw new Error("\u0631\u0645\u0632 \u0627\u0644\u062A\u062D\u0642\u0642 \u063A\u064A\u0631 \u0635\u062D\u064A\u062D \u0623\u0648 \u0645\u0646\u062A\u0647\u064A \u0627\u0644\u0635\u0644\u0627\u062D\u064A\u0629. \u064A\u0631\u062C\u0649 \u0627\u0644\u0645\u062D\u0627\u0648\u0644\u0629 \u0645\u0631\u0629 \u0623\u062E\u0631\u0649.");
+  }
+  return data?.session ?? null;
 }
 function sanitizeColorList(raw, fallback) {
   if (!Array.isArray(raw)) return fallback;
@@ -1956,12 +2077,15 @@ export {
   loadDynamicSettings,
   loadStoreState,
   lookupCustomerOrdersByPhone,
+  normalizeAlgerianPhoneE164,
   readCachedDynamicSettings,
   readCachedProducts,
+  requestPasswordResetByEmail,
   sanitizeDeliveryPricing,
   sanitizeShippingCompanies,
   saveDynamicSettings,
   saveStoreState,
+  sendPasswordResetSmsOtp,
   sendTelegramOrderNotification,
   sendTelegramTestMessage,
   signInAdmin,
@@ -1971,6 +2095,7 @@ export {
   updateAdminEmail,
   updateAdminPassword,
   uploadStoreImage,
+  verifyPasswordResetSmsOtp,
   writeCachedDynamicSettings,
   writeCachedProducts
 };

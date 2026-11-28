@@ -69,11 +69,33 @@ import {
   updateAdminEmail,
   updateAdminPassword
 } from "../lib/supabase";
-function AdminLoginModal({ isOpen, onClose, onLogin }) {
+import { PasswordRecoveryPanel } from "./PasswordRecoveryPanel";
+function AdminLoginModal({
+  isOpen,
+  onClose,
+  onLogin,
+  whatsappNumber = WHATSAPP_NUMBER,
+  brandName = "DG by Douaa",
+  forcePasswordRecovery = false,
+  onPasswordRecoveryComplete,
+  onNotify
+}) {
   const [email, setEmail] = useState("khaldibk31@gmail.com");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState(forcePasswordRecovery ? "recovery" : "login");
+  useEffect(() => {
+    if (!isOpen) {
+      setError("");
+      setPassword("");
+      setViewMode(forcePasswordRecovery ? "recovery" : "login");
+      return;
+    }
+    if (forcePasswordRecovery) {
+      setViewMode("recovery");
+    }
+  }, [isOpen, forcePasswordRecovery]);
   if (!isOpen) return null;
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -114,8 +136,27 @@ function AdminLoginModal({ isOpen, onClose, onLogin }) {
             }
           )
         ] }),
-        /* @__PURE__ */ jsx("p", { className: "text-xs text-[#6E4E5A] mb-4", children: "\u062F\u062E\u0648\u0644 \u062E\u0627\u0635 \u0628\u0627\u0644\u0625\u062F\u0627\u0631\u0629 \u0644\u0645\u062A\u0627\u0628\u0639\u0629 \u0627\u0644\u0637\u0644\u0628\u0627\u062A \u0648\u0627\u0644\u0623\u0631\u0628\u0627\u062D \u0648\u062A\u0639\u062F\u064A\u0644 \u0627\u0644\u0645\u0646\u062A\u062C\u0627\u062A." }),
-        /* @__PURE__ */ jsxs("form", { onSubmit: handleSubmit, className: "space-y-3", children: [
+        /* @__PURE__ */ jsx("p", { className: "text-xs text-[#6E4E5A] mb-4", children: viewMode === "recovery" ? "\u0627\u0633\u062A\u0639\u0627\u062F\u0629 \u0627\u0644\u0648\u0635\u0648\u0644 \u0625\u0644\u0649 \u062D\u0633\u0627\u0628 \u0627\u0644\u0625\u062F\u0627\u0631\u0629 \u0628\u0623\u0645\u0627\u0646." : "\u062F\u062E\u0648\u0644 \u062E\u0627\u0635 \u0628\u0627\u0644\u0625\u062F\u0627\u0631\u0629 \u0644\u0645\u062A\u0627\u0628\u0639\u0629 \u0627\u0644\u0637\u0644\u0628\u0627\u062A \u0648\u0627\u0644\u0623\u0631\u0628\u0627\u062D \u0648\u062A\u0639\u062F\u064A\u0644 \u0627\u0644\u0645\u0646\u062A\u062C\u0627\u062A." }),
+        viewMode === "recovery" ? /* @__PURE__ */ jsx(
+          PasswordRecoveryPanel,
+          {
+            initialEmail: email.trim(),
+            whatsappNumber,
+            brandName,
+            initialStep: forcePasswordRecovery ? "new-password" : "choose",
+            accountLabel: "\u062D\u0633\u0627\u0628 \u0627\u0644\u0625\u062F\u0627\u0631\u0629",
+            onBackToLogin: () => {
+              setViewMode("login");
+              if (forcePasswordRecovery && onPasswordRecoveryComplete) {
+                onPasswordRecoveryComplete();
+              }
+            },
+            onPasswordUpdated: () => {
+              onPasswordRecoveryComplete?.();
+            },
+            onNotify
+          }
+        ) : /* @__PURE__ */ jsxs("form", { onSubmit: handleSubmit, className: "space-y-3", children: [
           /* @__PURE__ */ jsx(
             "input",
             {
@@ -127,17 +168,31 @@ function AdminLoginModal({ isOpen, onClose, onLogin }) {
               className: "w-full px-3.5 py-2.5 rounded-lg border border-[#F2D7DF] bg-[#FFF9FA] text-sm text-[#2A151D]"
             }
           ),
-          /* @__PURE__ */ jsx(
-            "input",
-            {
-              type: "password",
-              autoComplete: "current-password",
-              value: password,
-              onChange: (e) => setPassword(e.target.value),
-              placeholder: "\u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631",
-              className: "w-full px-3.5 py-2.5 rounded-lg border border-[#F2D7DF] bg-[#FFF9FA] text-sm text-[#2A151D]"
-            }
-          ),
+          /* @__PURE__ */ jsxs("div", { className: "space-y-1.5", children: [
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                type: "password",
+                autoComplete: "current-password",
+                value: password,
+                onChange: (e) => setPassword(e.target.value),
+                placeholder: "\u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631",
+                className: "w-full px-3.5 py-2.5 rounded-lg border border-[#F2D7DF] bg-[#FFF9FA] text-sm text-[#2A151D]"
+              }
+            ),
+            /* @__PURE__ */ jsx("div", { className: "flex justify-start", children: /* @__PURE__ */ jsx(
+              "button",
+              {
+                type: "button",
+                onClick: () => {
+                  setError("");
+                  setViewMode("recovery");
+                },
+                className: "text-xs font-bold text-[#5E1734] hover:text-[#8E244D] hover:underline transition-colors cursor-pointer",
+                children: "\u0646\u0633\u064A\u062A \u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631\u061F"
+              }
+            ) })
+          ] }),
           error && /* @__PURE__ */ jsx("p", { className: "text-xs font-semibold text-[#BE123C]", children: error }),
           /* @__PURE__ */ jsxs("div", { className: "flex gap-2 pt-2", children: [
             /* @__PURE__ */ jsx(
